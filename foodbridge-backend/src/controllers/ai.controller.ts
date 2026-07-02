@@ -15,6 +15,7 @@ const AnalyseSchema = z.object({
   quantity: z.string().min(1),
   description: z.string().optional(),
   cookedAt: z.string().optional(),
+  imageBase64: z.string().optional(),
 });
 
 const MatchSchema = z.object({

@@ -51,17 +51,15 @@ function extractText(response: any): string {
 }
 
 /** Shared generateContent wrapper with proper role-based message format */
-async function generate(userPrompt: string, cfg: { temperature: number; maxOutputTokens: number }): Promise<string> {
+async function generate(parts: any[], cfg: { temperature: number; maxOutputTokens: number }): Promise<string> {
   const client = getClient();
   const response = await client.models.generateContent({
     model: MODEL,
     contents: [
-      // Gemma 4 doesn't support systemInstruction — embed context in the user turn
-      { role: 'user', parts: [{ text: userPrompt }] },
+      { role: 'user', parts },
     ],
     config: {
       temperature: cfg.temperature,
-      // 4096 gives enough room for thinking tokens + JSON response
       maxOutputTokens: 4096,
     },
   });
@@ -87,9 +85,25 @@ export const analyseDonation = async (donation: {
   quantity: string;
   description?: string;
   cookedAt?: string;
+  imageBase64?: string;
 }): Promise<FoodAnalysisResult> => {
   const userPrompt = buildFoodAnalysisUserPrompt(donation);
-  const rawText = await generate(userPrompt, { temperature: 0.2, maxOutputTokens: 512 });
+  const parts: any[] = [{ text: userPrompt }];
+  
+  if (donation.imageBase64) {
+    // The base64 string from frontend usually looks like 'data:image/jpeg;base64,/9j/4AAQSkZJ...'
+    const match = donation.imageBase64.match(/^data:(image\/[a-zA-Z+.-]+);base64,(.+)$/);
+    if (match) {
+      parts.push({
+        inlineData: {
+          mimeType: match[1],
+          data: match[2]
+        }
+      });
+    }
+  }
+
+  const rawText = await generate(parts, { temperature: 0.2, maxOutputTokens: 512 });
   const parsed = parseJsonFromGemma<FoodAnalysisResult>(rawText);
   return { ...parsed, analysedAt: new Date().toISOString() };
 };
@@ -114,7 +128,7 @@ export const matchDonationToOrgs = async (
   organizations: Array<{ id: string; name: string; type: string; city: string; acceptedFoodTypes: string[]; capacity: number }>
 ): Promise<MatchResult> => {
   const userPrompt = buildOrgMatchingUserPrompt(donation, organizations);
-  const rawText = await generate(userPrompt, { temperature: 0.1, maxOutputTokens: 768 });
+  const rawText = await generate([{ text: userPrompt }], { temperature: 0.1, maxOutputTokens: 768 });
   return parseJsonFromGemma<MatchResult>(rawText);
 };
 
@@ -132,7 +146,7 @@ export const generatePickupNotification = async (
   language: 'english' | 'bengali' | 'hindi'
 ): Promise<NotificationResult> => {
   const userPrompt = buildNotificationUserPrompt(donation, organization, language);
-  const rawText = await generate(userPrompt, { temperature: 0.4, maxOutputTokens: 512 });
+  const rawText = await generate([{ text: userPrompt }], { temperature: 0.4, maxOutputTokens: 512 });
   const parsed = parseJsonFromGemma<NotificationResult>(rawText);
   return { ...parsed, language };
 };

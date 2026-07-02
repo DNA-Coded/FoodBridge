@@ -11,7 +11,7 @@ export const buildFoodAnalysisUserPrompt = (donation: {
   description?: string;
   cookedAt?: string;
 }): string => {
-  return `${CTX}Analyse this donated food item:
+  return `${CTX}Analyse this donated food item. If an image is provided alongside this text, inspect it carefully to verify the food's visual condition and safety:
 
 Food: ${donation.name}
 Category: ${donation.category}
