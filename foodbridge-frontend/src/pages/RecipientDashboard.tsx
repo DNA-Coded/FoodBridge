@@ -1,241 +1,160 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { mockStats, mockDonations, mockDonors } from '../mockData';
+import { Link, useLocation } from 'react-router-dom';
 
-const RecipientDashboard = () => {
-  const getDonorName = (id?: string) => {
-    return mockDonors.find(d => d.id === id)?.name || 'Unknown Donor';
-  };
+const navItems = [
+  { label: 'Dashboard', icon: '⬛', path: '/recipient-dashboard' },
+  { label: 'Available Food', icon: '🍱', path: '/create-donation' },
+  { label: 'Track Pickups', icon: '📦', path: '/track-donation' },
+  { label: 'Organization', icon: '🏢', path: '/profile' },
+  { label: 'Settings', icon: '⚙️', path: '/settings' },
+];
+
+function Sidebar() {
+  const location = useLocation();
   return (
-    <div className="bg-background text-on-background min-h-screen flex">
-      {/* Sidebar Navigation */}
-      <nav className="fixed left-0 top-0 h-full hidden lg:flex flex-col py-lg px-md w-64 bg-inverse-surface dark:bg-surface-container-lowest shadow-sm">
-        <div className="mb-2xl flex items-center gap-md">
-          <span className="material-symbols-outlined text-surface-bright text-4xl" data-icon="local_shipping" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>local_shipping</span>
+    <aside style={{
+      width: '260px', minHeight: '100vh', background: '#1A1A1A',
+      display: 'flex', flexDirection: 'column', padding: '32px 0',
+      position: 'fixed', top: 0, left: 0, zIndex: 40,
+    }}>
+      <Link to="/" style={{ padding: '0 28px 32px', textDecoration: 'none' }}>
+        <div style={{ fontSize: '22px', fontWeight: 900, color: '#fff', letterSpacing: '-1px' }}>
+          foodbridge<span style={{ color: '#F5A623' }}>.</span>
+        </div>
+        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', marginTop: '4px' }}>Recipient Portal</div>
+      </Link>
+      <div style={{ flex: 1, padding: '0 16px' }}>
+        {navItems.map(item => {
+          const active = location.pathname === item.path;
+          return (
+            <Link key={item.path} to={item.path} style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '12px 16px', borderRadius: '12px', marginBottom: '4px',
+              textDecoration: 'none',
+              background: active ? '#F5A623' : 'transparent',
+              color: active ? '#1A1A1A' : 'rgba(255,255,255,0.6)',
+              fontWeight: active ? 700 : 500, fontSize: '14px',
+            }}>
+              <span style={{ fontSize: '16px' }}>{item.icon}</span>
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+      <div style={{ padding: '24px 28px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Kolkata Food Bank</div>
+        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Verified NGO · Park Street</div>
+        <Link to="/" style={{ display: 'inline-block', marginTop: '12px', fontSize: '12px', color: 'rgba(255,255,255,0.4)', textDecoration: 'none', fontWeight: 500 }}>
+          ← Back to Home
+        </Link>
+      </div>
+    </aside>
+  );
+}
+
+const availableDonations = [
+  { id: 'D-001', donor: 'Grand Palace Hotel', food: 'Wedding Biryani & Sides', qty: '20 kg', meals: 150, urgency: 'High', expires: '2h 30m', distance: '2.4 km', matched: true, score: 94 },
+  { id: 'D-002', donor: 'The Bread Artisan', food: 'Sourdough Loaves & Pastries', qty: '9 kg', meals: 45, urgency: 'Medium', expires: '6h', distance: '1.1 km', matched: false, score: 87 },
+  { id: 'D-003', donor: 'Ananya Ghosh (Individual)', food: 'Dal Makhani & Rice', qty: '25 kg', meals: 110, urgency: 'High', expires: '1h 45m', distance: '3.8 km', matched: false, score: 79 },
+];
+
+function UrgencyBadge({ level }: { level: string }) {
+  const map: Record<string, { bg: string; color: string }> = {
+    High:   { bg: '#F8D7DA', color: '#721C24' },
+    Medium: { bg: '#FFF3CD', color: '#856404' },
+    Low:    { bg: '#D4EDDA', color: '#155724' },
+  };
+  const s = map[level] || { bg: '#F5F0EA', color: '#888' };
+  return <span style={{ padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, background: s.bg, color: s.color }}>{level} Urgency</span>;
+}
+
+export default function RecipientDashboard() {
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'DM Sans', 'Inter', sans-serif", background: '#F5F0EA' }}>
+      <Sidebar />
+
+      <main style={{ marginLeft: '260px', flex: 1, padding: '48px', minHeight: '100vh' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '48px' }}>
           <div>
-            <h1 className="font-headline-md text-headline-md text-surface-bright">FoodBridge</h1>
-            <p className="font-label-md text-label-md text-surface-variant">Enterprise Logistics</p>
+            <p style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: '#999', marginBottom: '8px' }}>Kolkata Food Bank</p>
+            <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-2px', color: '#1A1A1A', margin: 0, lineHeight: 1 }}>
+              Recipient<br />Dashboard
+            </h1>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ background: '#D4EDDA', color: '#155724', fontWeight: 700, fontSize: '13px', padding: '8px 16px', borderRadius: '999px', marginBottom: '8px', display: 'inline-block' }}>✓ Verified Organization</div>
+            <div style={{ fontSize: '13px', color: '#888' }}>Capacity: 500 meals/day</div>
           </div>
         </div>
-        <button className="w-full bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors py-sm px-md rounded-lg font-title-md text-title-md flex justify-center items-center gap-sm mb-2xl">
-          <span className="material-symbols-outlined" data-icon="add">add</span>
-          New Claim
-        </button>
-        <ul className="flex-1 space-y-sm">
-          <li>
-            <Link to="/recipient-dashboard" className="bg-primary-container text-on-primary-container rounded-lg font-bold flex gap-md items-center cursor-pointer px-md py-sm">
-              <span className="material-symbols-outlined" data-icon="home" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>home</span>
-              <span className="font-body-md text-body-md">Home</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/donor-dashboard" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 flex gap-md items-center cursor-pointer">
-              <span className="material-symbols-outlined" data-icon="card_giftcard">card_giftcard</span>
-              <span className="font-body-md text-body-md">Donations</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/profile" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 flex gap-md items-center cursor-pointer">
-              <span className="material-symbols-outlined" data-icon="corporate_fare">corporate_fare</span>
-              <span className="font-body-md text-body-md">Organizations</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/track-donation" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 flex gap-md items-center cursor-pointer">
-              <span className="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
-              <span className="font-body-md text-body-md">Tracking</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/settings" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 flex gap-md items-center cursor-pointer">
-              <span className="material-symbols-outlined" data-icon="settings">settings</span>
-              <span className="font-body-md text-body-md">Settings</span>
-            </Link>
-          </li>
-        </ul>
-        <div className="mt-auto border-t border-surface-variant/20 pt-md space-y-sm">
-          <Link to="#" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 flex gap-md items-center cursor-pointer">
-            <span className="material-symbols-outlined" data-icon="contact_support">contact_support</span>
-            <span className="font-body-md text-body-md">Support</span>
-          </Link>
-          <Link to="/" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 flex gap-md items-center cursor-pointer">
-            <span className="material-symbols-outlined" data-icon="logout">logout</span>
-            <span className="font-body-md text-body-md">Log out</span>
-          </Link>
+
+        {/* Stats */}
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
+          {[
+            { label: 'Meals Received', value: '8.4K', sub: 'This month', color: '#F5A623' },
+            { label: 'Active Matches', value: '3', sub: 'Pending acceptance', color: '#E05C2A' },
+            { label: 'Completed Pickups', value: '142', sub: 'All time', color: '#2A7A4A' },
+            { label: 'Avg AI Match Score', value: '91', sub: 'Out of 100', color: '#1A1A1A' },
+          ].map(s => (
+            <div key={s.label} style={{ background: '#fff', borderRadius: '20px', padding: '28px', flex: 1 }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#999', marginBottom: '12px' }}>{s.label}</div>
+              <div style={{ fontSize: '44px', fontWeight: 900, letterSpacing: '-2px', color: s.color, lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: '13px', color: '#888', marginTop: '8px', fontWeight: 500 }}>{s.sub}</div>
+            </div>
+          ))}
         </div>
-      </nav>
-      
-      {/* Main Content Area */}
-      <main className="flex-1 lg:ml-64 p-lg md:p-2xl w-full max-w-7xl mx-auto">
-        <header className="mb-2xl flex justify-between items-end border-b border-outline-variant pb-md">
-          <div>
-            <h2 className="font-headline-lg text-headline-lg text-on-surface">Recipient Dashboard</h2>
-            <p className="font-body-lg text-body-lg text-on-surface-variant mt-unit">Overview of available food and your active claims.</p>
-          </div>
-          <div className="hidden md:flex gap-md items-center">
-            <span className="font-label-md text-label-md text-on-surface-variant bg-surface-container py-xs px-sm rounded-full">Status: Online</span>
-            <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-title-md text-title-md">
-              JD
+
+        {/* AI Match Alert */}
+        <div style={{ background: '#1A1A1A', borderRadius: '20px', padding: '28px 32px', marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <div style={{ fontSize: '32px' }}>🤖</div>
+            <div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#F5A623', marginBottom: '4px' }}>New AI Match Available!</div>
+              <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)' }}>Grand Palace Hotel's 20kg biryani is a 94% match for your organization. Expires in 2h 30m.</div>
             </div>
           </div>
-        </header>
-        
-        {/* Stats Section */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-md mb-2xl">
-          {/* Stat Card 1 */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm relative overflow-hidden">
-            <div className="flex justify-between items-start mb-md">
-              <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Available Nearby</span>
-              <span className="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
-            </div>
-            <div className="font-headline-lg text-headline-lg text-on-surface mb-unit">{mockStats.recipient.availableNearby} lbs</div>
-            <div className="flex items-center gap-xs text-primary-container">
-              <span className="material-symbols-outlined text-[16px]" data-icon="trending_up">trending_up</span>
-              <span className="font-label-md text-label-md">+12% this week</span>
-            </div>
-            {/* Sparkline abstraction */}
-            <div className="absolute bottom-0 left-0 w-full h-1 bg-surface-variant">
-              <div className="h-full bg-primary w-2/3"></div>
-            </div>
-          </div>
-          {/* Stat Card 2 */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm relative overflow-hidden">
-            <div className="flex justify-between items-start mb-md">
-              <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Accepted Claims</span>
-              <span className="material-symbols-outlined text-tertiary" data-icon="check_circle">check_circle</span>
-            </div>
-            <div className="font-headline-lg text-headline-lg text-on-surface mb-unit">{mockStats.recipient.acceptedClaims}</div>
-            <div className="flex items-center gap-xs text-on-surface-variant">
-              <span className="material-symbols-outlined text-[16px]" data-icon="schedule">schedule</span>
-              <span className="font-label-md text-label-md">3 pending pickup</span>
-            </div>
-          </div>
-          {/* Stat Card 3 */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm relative overflow-hidden">
-            <div className="flex justify-between items-start mb-md">
-              <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Meals Received</span>
-              <span className="material-symbols-outlined text-secondary" data-icon="restaurant">restaurant</span>
-            </div>
-            <div className="font-headline-lg text-headline-lg text-on-surface mb-unit">{mockStats.recipient.mealsReceived.toLocaleString()}</div>
-            <div className="flex items-center gap-xs text-on-surface-variant">
-              <span className="font-label-md text-label-md">Lifetime metric</span>
-            </div>
-          </div>
-        </section>
-        
-        {/* Bento Grid Layout for Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-md">
-          {/* Recommended for You */}
-          <section className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-sm flex flex-col">
-            <div className="flex justify-between items-center mb-md pb-sm border-b border-outline-variant">
-              <h3 className="font-title-md text-title-md text-on-surface flex items-center gap-sm">
-                <span className="material-symbols-outlined text-primary" data-icon="recommend">recommend</span>
-                Recommended for You
-              </h3>
-              <a className="font-label-md text-label-md text-primary hover:underline" href="#">View All</a>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-md flex-1">
-              {/* Food Item Card */}
-              <div className="bg-surface border border-outline-variant rounded-lg p-md hover:bg-surface-container-low transition-colors cursor-pointer group">
-                <div className="flex justify-between items-start mb-sm">
-                  <h4 className="font-body-lg text-body-lg font-semibold text-on-surface group-hover:text-primary transition-colors">Mixed Produce Box</h4>
-                  <span className="bg-error-container text-on-error-container font-label-md text-label-md px-sm py-xs rounded-full flex items-center gap-xs">
-                    <span className="material-symbols-outlined text-[14px]" data-icon="timer">timer</span> 2h
-                  </span>
+          <button style={{
+            background: '#F5A623', color: '#1A1A1A', fontWeight: 800,
+            padding: '14px 28px', borderRadius: '999px', fontSize: '14px',
+            border: 'none', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+          }}>Accept Match →</button>
+        </div>
+
+        {/* Available Donations */}
+        <h2 style={{ fontSize: '26px', fontWeight: 900, letterSpacing: '-1px', color: '#1A1A1A', marginBottom: '24px' }}>Available Donations Near You</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {availableDonations.map(d => (
+            <div key={d.id} style={{ background: '#fff', borderRadius: '20px', padding: '28px 32px', display: 'flex', alignItems: 'center', gap: '24px' }}>
+              {/* AI Score Badge */}
+              <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: d.score >= 90 ? '#F5A623' : d.score >= 80 ? '#FFF3CD' : '#F5F0EA', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ fontSize: '18px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1 }}>{d.score}</div>
+                <div style={{ fontSize: '9px', fontWeight: 700, color: '#666' }}>MATCH</div>
+              </div>
+
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '17px', fontWeight: 800, color: '#1A1A1A' }}>{d.food}</span>
+                  {d.matched && <span style={{ fontSize: '11px', fontWeight: 700, background: '#D4EDDA', color: '#155724', padding: '2px 8px', borderRadius: '999px' }}>AI Matched</span>}
                 </div>
-                <p className="font-body-md text-body-md text-on-surface-variant mb-md">Fresh vegetables and fruits from local farmers market surplus.</p>
-                <div className="flex justify-between items-center mt-auto border-t border-outline-variant pt-sm">
-                  <div className="flex items-center gap-xs text-on-surface-variant font-label-md text-label-md">
-                    <span className="material-symbols-outlined text-[16px]" data-icon="directions_car">directions_car</span> 2.4 miles
-                  </div>
-                  <span className="font-body-md text-body-md font-medium text-on-surface">50 lbs</span>
+                <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>{d.donor} · {d.qty} · {d.meals} meals est.</div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <UrgencyBadge level={d.urgency} />
+                  <span style={{ fontSize: '12px', background: '#F5F0EA', color: '#666', fontWeight: 600, padding: '4px 10px', borderRadius: '999px' }}>📍 {d.distance}</span>
+                  <span style={{ fontSize: '12px', background: '#F5F0EA', color: '#666', fontWeight: 600, padding: '4px 10px', borderRadius: '999px' }}>⏱ Expires in {d.expires}</span>
                 </div>
               </div>
-              {/* Food Item Card */}
-              <div className="bg-surface border border-outline-variant rounded-lg p-md hover:bg-surface-container-low transition-colors cursor-pointer group">
-                <div className="flex justify-between items-start mb-sm">
-                  <h4 className="font-body-lg text-body-lg font-semibold text-on-surface group-hover:text-primary transition-colors">Artisan Bread Loaves</h4>
-                  <span className="bg-surface-variant text-on-surface-variant font-label-md text-label-md px-sm py-xs rounded-full flex items-center gap-xs">
-                    <span className="material-symbols-outlined text-[14px]" data-icon="timer">timer</span> 12h
-                  </span>
-                </div>
-                <p className="font-body-md text-body-md text-on-surface-variant mb-md">Assorted sourdough and rye breads baked today.</p>
-                <div className="flex justify-between items-center mt-auto border-t border-outline-variant pt-sm">
-                  <div className="flex items-center gap-xs text-on-surface-variant font-label-md text-label-md">
-                    <span className="material-symbols-outlined text-[16px]" data-icon="directions_car">directions_car</span> 4.1 miles
-                  </div>
-                  <span className="font-body-md text-body-md font-medium text-on-surface">15 lbs</span>
-                </div>
-              </div>
-            </div>
-          </section>
-          
-          {/* Map Placeholder */}
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm flex flex-col h-full min-h-[300px]">
-            <div className="p-md border-b border-outline-variant bg-surface-container-lowest z-10">
-              <h3 className="font-title-md text-title-md text-on-surface flex items-center gap-sm">
-                <span className="material-symbols-outlined text-tertiary" data-icon="map">map</span>
-                Live Map
-              </h3>
-            </div>
-            <div className="flex-1 relative bg-surface-variant/30 flex items-center justify-center group overflow-hidden">
-              <img className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" data-alt="A clean, minimalist vector map interface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDg2iJivVMoV_QRHDSwpEIJYqrJ3KqYxKbUzSwShDRkmuaT3o2-wrYS9uuo9rQgm1WlWkmnapNAh72hGaVJrGYHKotzZZUgQy9vcumytChXS-_LnZCAvzOTwTRUZow-qc3T5z0SiQtte_ro6omp3j7xiH8caWv1UA9smeMduIqFWmdxO6lVeh_4alOPxkBMRL9OdJL-EdzppzDPsBZJmd_ivB-tdRi_5rCrnRdCB_rDyTJkBzppUy6wYQicCCNUp9T7EDKKDdEh0CE" alt="Map" />
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-inverse-surface/10 backdrop-blur-[2px]">
-                <button className="bg-surface-container-lowest border border-outline-variant text-on-surface font-body-md text-body-md py-sm px-md rounded-lg shadow-lg flex items-center gap-sm hover:bg-surface transition-colors">
-                  <span className="material-symbols-outlined" data-icon="fullscreen">fullscreen</span> Expand Map
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button style={{ background: '#F5F0EA', border: 'none', borderRadius: '12px', padding: '12px 20px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#1A1A1A' }}>
+                  Details
+                </button>
+                <button style={{ background: '#F5A623', border: 'none', borderRadius: '12px', padding: '12px 24px', fontWeight: 800, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#1A1A1A' }}>
+                  Accept →
                 </button>
               </div>
             </div>
-          </section>
-          
-          {/* Active Claims Table */}
-          <section className="col-span-1 lg:col-span-3 bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-sm mt-md">
-            <div className="flex justify-between items-center mb-md pb-sm border-b border-outline-variant">
-              <h3 className="font-title-md text-title-md text-on-surface flex items-center gap-sm">
-                <span className="material-symbols-outlined text-secondary" data-icon="list_alt">list_alt</span>
-                Active Claims
-              </h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-container-low border-b border-outline-variant">
-                    <th className="font-label-md text-label-md text-on-surface-variant uppercase py-sm px-md">Item</th>
-                    <th className="font-label-md text-label-md text-on-surface-variant uppercase py-sm px-md">Donor</th>
-                    <th className="font-label-md text-label-md text-on-surface-variant uppercase py-sm px-md">Pickup Window</th>
-                    <th className="font-label-md text-label-md text-on-surface-variant uppercase py-sm px-md">Status</th>
-                    <th className="font-label-md text-label-md text-on-surface-variant uppercase py-sm px-md text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="font-body-md text-body-md text-on-surface">
-                  {mockDonations.slice(0, 2).map((donation) => (
-                    <tr key={donation.id} className="border-b border-outline-variant hover:bg-surface transition-colors">
-                      <td className="py-md px-md font-medium">{donation.items[0]?.name || 'Donation'}</td>
-                      <td className="py-md px-md">{getDonorName(donation.donorId)}</td>
-                      <td className="py-md px-md text-on-surface-variant">{donation.pickupWindow}</td>
-                      <td className="py-md px-md">
-                        <span className={`px-sm py-xs rounded-full flex items-center w-max gap-xs border font-label-md text-label-md ${
-                          donation.status === 'Ready' || donation.status === 'In Transit' ? 'bg-[#dcfce7] text-[#166534] border-[#166534]/20' : 
-                          'bg-surface-variant text-on-surface-variant border-outline-variant'
-                        }`}>
-                          <span className="material-symbols-outlined text-[14px]" data-icon={donation.status === 'Ready' || donation.status === 'In Transit' ? 'check_circle' : 'schedule'}>
-                            {donation.status === 'Ready' || donation.status === 'In Transit' ? 'check_circle' : 'schedule'}
-                          </span> {donation.status}
-                        </span>
-                      </td>
-                      <td className="py-md px-md text-right">
-                        <button className="text-primary hover:text-primary-container font-label-md text-label-md">Details</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          ))}
         </div>
       </main>
     </div>
   );
-};
-
-export default RecipientDashboard;
+}
