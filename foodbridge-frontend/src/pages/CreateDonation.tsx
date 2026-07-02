@@ -91,6 +91,7 @@ export default function CreateDonation() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
 
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -110,6 +111,17 @@ export default function CreateDonation() {
     color: '#666', marginBottom: '8px',
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageBase64(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // ── Call Gemma 4 API ──
   const runAiAnalysis = async () => {
     setAiLoading(true);
@@ -124,6 +136,7 @@ export default function CreateDonation() {
           category: form.category || 'Other',
           quantity: `${form.quantity} ${form.unit}`,
           description: form.description,
+          imageBase64: imageBase64 // Multimodal support
         }),
       });
       const json = await res.json();
@@ -318,11 +331,32 @@ export default function CreateDonation() {
                   />
                 </div>
 
+                <div style={{ marginBottom: '32px' }}>
+                  <label style={labelStyle}>Upload Food Photo (For Gemma Vision)</label>
+                  <div style={{
+                    border: '2px dashed rgba(0,0,0,0.15)', borderRadius: '16px', padding: '32px', textAlign: 'center', cursor: 'pointer', position: 'relative', background: '#fafafa'
+                  }}>
+                    <input type="file" accept="image/*" onChange={handleImageUpload} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
+                    {imageBase64 ? (
+                      <div>
+                        <img src={imageBase64} alt="Food preview" style={{ height: '120px', borderRadius: '8px', objectFit: 'cover' }} />
+                        <div style={{ marginTop: '12px', fontSize: '13px', fontWeight: 700, color: '#2A7A4A' }}>✓ Image ready for AI analysis</div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: '32px', marginBottom: '12px' }}>📷</div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#1A1A1A', marginBottom: '4px' }}>Click or drag a photo here</div>
+                        <div style={{ fontSize: '13px', color: '#888' }}>Gemma will analyze visual condition and safety</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div style={{ background: '#F5F0EA', borderRadius: '14px', padding: '16px 20px', marginBottom: '32px', display: 'flex', gap: '12px' }}>
                   <div style={{ fontSize: '20px' }}>🤖</div>
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A1A', marginBottom: '4px' }}>Gemma 4 AI will analyse this immediately</div>
-                    <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>Urgency level, estimated servings, best-matching organizations — all automated.</div>
+                    <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>Urgency level, visual condition, and best-matching organizations — all automated.</div>
                   </div>
                 </div>
 
