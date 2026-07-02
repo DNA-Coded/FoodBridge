@@ -1,47 +1,39 @@
-// ─── Prompt Builder ───────────────────────────────────────────────────────────
-// All prompts instruct Gemma to respond ONLY with a valid JSON object.
-// Low temperature is used at call sites to keep outputs deterministic.
+// ─── System context prefix (embedded in every user prompt for Gemma 4) ────────
+const CTX = `You are FoodBridge AI, a food safety coordinator for a surplus food redistribution platform in India. You ALWAYS respond with ONLY a valid JSON object — no markdown, no code fences, no explanation. The first character must be { and the last must be }.
 
-// ─── 1. Food Analysis Prompt ──────────────────────────────────────────────────
-export const buildFoodAnalysisPrompt = (donation: {
+`;
+
+// ─── 1. Food Analysis User Prompt ─────────────────────────────────────────────
+export const buildFoodAnalysisUserPrompt = (donation: {
   name: string;
   category: string;
   quantity: string;
   description?: string;
   cookedAt?: string;
 }): string => {
-  return `You are FoodBridge AI, an expert food safety coordinator and logistics analyst for a surplus food redistribution platform in India.
+  return `${CTX}Analyse this donated food item:
 
-Analyse the following donated food and respond with ONLY a valid JSON object — no markdown, no explanation, no code fences.
+Food: ${donation.name}
+Category: ${donation.category}
+Quantity: ${donation.quantity}
+Description: ${donation.description || 'Not provided'}
+Prepared at: ${donation.cookedAt || 'Unknown time'}
 
-Food Details:
-- Name: ${donation.name}
-- Category: ${donation.category}
-- Quantity: ${donation.quantity}
-- Description: ${donation.description || 'Not provided'}
-- Cooked/Prepared At: ${donation.cookedAt || 'Unknown'}
-
-Return this exact JSON structure:
+Return ONLY this JSON (no other text):
 {
-  "summary": "A 2-3 sentence plain-language summary of this donation for the recipient organization",
-  "urgencyLevel": "low | medium | high | critical",
-  "estimatedServings": <number of people this can feed>,
-  "recommendedCategories": ["food_bank", "community_kitchen", ...],
-  "safeToConsume": true | false,
-  "storageAdvice": "Brief storage/handling advice for the recipient"
+  "summary": "2-3 sentence description for recipient organizations",
+  "urgencyLevel": "low|medium|high|critical",
+  "estimatedServings": <integer>,
+  "recommendedCategories": ["food_bank"|"community_kitchen"|"shelter"|"school"],
+  "safeToConsume": true|false,
+  "storageAdvice": "Brief handling advice"
 }
 
-Urgency guide:
-- critical: cooked food, expires in < 2 hours
-- high: cooked food, expires in 2-6 hours  
-- medium: baked goods or produce, expires in 6-24 hours
-- low: packaged/dry goods, shelf-stable
-
-Respond with ONLY the JSON object.`;
+Urgency: critical=cooked <2hrs, high=cooked 2-6hrs, medium=baked 6-24hrs, low=shelf-stable`;
 };
 
-// ─── 2. Organization Matching Prompt ─────────────────────────────────────────
-export const buildOrgMatchingPrompt = (
+// ─── 2. Organization Matching User Prompt ─────────────────────────────────────
+export const buildOrgMatchingUserPrompt = (
   donation: { name: string; category: string; quantity: string; urgencyLevel: string },
   organizations: Array<{
     id: string;
@@ -53,80 +45,56 @@ export const buildOrgMatchingPrompt = (
   }>
 ): string => {
   const orgList = organizations
-    .map((o, i) => `${i + 1}. ID: ${o.id} | Name: ${o.name} | Type: ${o.type} | Accepts: ${o.acceptedFoodTypes.join(', ')} | Capacity: ${o.capacity} meals/day`)
+    .map((o, i) => `${i + 1}. id=${o.id} name="${o.name}" type=${o.type} accepts=[${o.acceptedFoodTypes.join(',')}] capacity=${o.capacity}/day`)
     .join('\n');
 
-  return `You are FoodBridge AI, responsible for matching surplus food donations to the most appropriate recipient organizations in India.
+  return `Match this food donation to the best recipient organizations and score each one.
 
-Donation to Match:
+Donation:
 - Food: ${donation.name}
 - Category: ${donation.category}
 - Quantity: ${donation.quantity}
 - Urgency: ${donation.urgencyLevel}
 
-Available Organizations:
+Organizations:
 ${orgList}
 
-Score each organization (0-100) based on:
-- Food type compatibility (does the org accept this category?)
-- Capacity (can they handle this quantity?)
-- Organization type suitability (e.g., cooked meals → community kitchen, dry goods → food bank)
-- Urgency alignment (high urgency → orgs that can respond fast)
-
-Respond with ONLY this JSON object, no markdown:
+Return exactly this JSON (no markdown, no text outside the JSON):
 {
   "matches": [
-    {
-      "organizationId": "<id>",
-      "organizationName": "<name>",
-      "score": <0-100>,
-      "explanation": "One sentence explaining why this org is a good match"
-    }
+    {"organizationId": "<id>", "organizationName": "<name>", "score": <0-100>, "explanation": "<one sentence>"}
   ],
-  "topMatch": {
-    "organizationId": "<id of highest scorer>",
-    "organizationName": "<name>",
-    "score": <score>,
-    "explanation": "<detailed explanation for the donor>"
-  },
-  "reasoningSummary": "One paragraph explaining the overall matching decision"
+  "topMatch": {"organizationId": "<best id>", "organizationName": "<name>", "score": <score>, "explanation": "<detailed reason>"},
+  "reasoningSummary": "<one paragraph summary of matching decision>"
 }
 
-Sort matches by score descending. Include all organizations. Respond with ONLY the JSON.`;
+Sort matches by score descending.`;
 };
 
-// ─── 3. Multilingual Notification Prompt ─────────────────────────────────────
-export const buildNotificationPrompt = (
+// ─── 3. Multilingual Notification User Prompt ─────────────────────────────────
+export const buildNotificationUserPrompt = (
   donation: { name: string; quantity: string; pickupWindow: string; address: string },
   organization: { name: string; contactName?: string },
   language: 'english' | 'bengali' | 'hindi'
 ): string => {
-  const langMap = {
-    english: 'English',
-    bengali: 'Bengali (বাংলা)',
-    hindi: 'Hindi (हिंदी)',
-  };
+  const langMap = { english: 'English', bengali: 'Bengali (বাংলা)', hindi: 'Hindi (हिंदी)' };
 
-  return `You are FoodBridge AI, generating a pickup coordination message for a food donation.
+  return `Generate a food pickup notification in ${langMap[language]}.
 
-Donation Details:
-- Food: ${donation.name}
-- Quantity: ${donation.quantity}
-- Pickup Window: ${donation.pickupWindow}
-- Pickup Address: ${donation.address}
+Donation: ${donation.name} (${donation.quantity})
+Pickup Window: ${donation.pickupWindow}
+Pickup Address: ${donation.address}
+Recipient: ${organization.name} (contact: ${organization.contactName || 'Coordinator'})
 
-Recipient Organization: ${organization.name}
-Contact Person: ${organization.contactName || 'Coordinator'}
-
-Generate a professional, warm, and clear pickup notification in ${langMap[language]}.
-
-Respond with ONLY this JSON object, no markdown:
+Return exactly this JSON (no markdown, no text outside the JSON):
 {
-  "subject": "Short subject line for the notification",
-  "message": "Full notification message (3-4 sentences, warm and professional tone)",
-  "smsVersion": "Very short SMS-friendly version under 160 characters"
-}
-
-The message should include: the food available, quantity, pickup address, pickup time window, and a thank-you note.
-Respond with ONLY the JSON.`;
+  "subject": "<short notification subject line in ${langMap[language]}>",
+  "message": "<3-4 sentence warm professional message in ${langMap[language]} with food details, address, time, and thank-you>",
+  "smsVersion": "<under 160 character SMS version in ${langMap[language]}>"
+}`;
 };
+
+// ─── Legacy aliases (keep backward compatibility) ─────────────────────────────
+export const buildFoodAnalysisPrompt = buildFoodAnalysisUserPrompt;
+export const buildOrgMatchingPrompt = buildOrgMatchingUserPrompt;
+export const buildNotificationPrompt = buildNotificationUserPrompt;

@@ -1,8 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import {
-  buildFoodAnalysisPrompt,
-  buildOrgMatchingPrompt,
-  buildNotificationPrompt,
+  buildFoodAnalysisUserPrompt,
+  buildOrgMatchingUserPrompt,
+  buildNotificationUserPrompt,
 } from '../utils/prompt.builder';
 import { parseJsonFromGemma } from '../utils/response.parser';
 
@@ -12,15 +12,63 @@ let _client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI {
   if (!_client) {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is not set in environment variables.');
-    }
+    if (!apiKey) throw new Error('GEMINI_API_KEY is not set in environment variables.');
     _client = new GoogleGenAI({ apiKey });
   }
   return _client;
 }
 
-const MODEL = process.env.GEMMA_MODEL || 'gemma-3-27b-it';
+const MODEL = process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it';
+
+/**
+ * Robustly extract text from a @google/genai response.
+ * Gemma 4 is a thinking model — parts with thought=true are reasoning traces.
+ * We skip those and use only the final response parts.
+ */
+function extractText(response: any): string {
+  try {
+    const parts: any[] = response?.candidates?.[0]?.content?.parts ?? [];
+    if (parts.length > 0) {
+      const responseParts = parts.filter((p: any) => !p.thought);
+      const thoughtCount = parts.length - responseParts.length;
+      if (thoughtCount > 0) {
+        console.log(`[Gemma4] Skipped ${thoughtCount} thinking part(s)`);
+      }
+      const text = responseParts.map((p: any) => p.text ?? '').join('').trim();
+      if (text.length > 0) return text;
+      // If all parts are thought, use everything (model might not mark thoughts)
+      const allText = parts.map((p: any) => p.text ?? '').join('').trim();
+      if (allText.length > 0) return allText;
+    }
+  } catch (_) {}
+
+  if (typeof response?.text === 'string' && response.text.trim().length > 0) {
+    return response.text;
+  }
+
+  console.error('[Gemma4] Cannot extract text. Candidates:', JSON.stringify(response?.candidates ?? []).slice(0, 800));
+  return '';
+}
+
+/** Shared generateContent wrapper with proper role-based message format */
+async function generate(userPrompt: string, cfg: { temperature: number; maxOutputTokens: number }): Promise<string> {
+  const client = getClient();
+  const response = await client.models.generateContent({
+    model: MODEL,
+    contents: [
+      // Gemma 4 doesn't support systemInstruction — embed context in the user turn
+      { role: 'user', parts: [{ text: userPrompt }] },
+    ],
+    config: {
+      temperature: cfg.temperature,
+      // 4096 gives enough room for thinking tokens + JSON response
+      maxOutputTokens: 4096,
+    },
+  });
+  const text = extractText(response);
+  console.log(`[Gemma4 / ${MODEL}] Response (${text.length} chars):`, text.slice(0, 600));
+  return text;
+}
 
 // ─── 1. Food Analysis ─────────────────────────────────────────────────────────
 export interface FoodAnalysisResult {
@@ -40,20 +88,9 @@ export const analyseDonation = async (donation: {
   description?: string;
   cookedAt?: string;
 }): Promise<FoodAnalysisResult> => {
-  const client = getClient();
-  const prompt = buildFoodAnalysisPrompt(donation);
-
-  const response = await client.models.generateContent({
-    model: MODEL,
-    contents: prompt,
-    config: {
-      temperature: 0.2,   // low temp for factual analysis
-      maxOutputTokens: 512,
-    },
-  });
-
-  const text = response.text ?? '';
-  const parsed = parseJsonFromGemma<FoodAnalysisResult>(text);
+  const userPrompt = buildFoodAnalysisUserPrompt(donation);
+  const rawText = await generate(userPrompt, { temperature: 0.2, maxOutputTokens: 512 });
+  const parsed = parseJsonFromGemma<FoodAnalysisResult>(rawText);
   return { ...parsed, analysedAt: new Date().toISOString() };
 };
 
@@ -76,21 +113,9 @@ export const matchDonationToOrgs = async (
   donation: { name: string; category: string; quantity: string; urgencyLevel: string },
   organizations: Array<{ id: string; name: string; type: string; city: string; acceptedFoodTypes: string[]; capacity: number }>
 ): Promise<MatchResult> => {
-  const client = getClient();
-  const prompt = buildOrgMatchingPrompt(donation, organizations);
-
-  const response = await client.models.generateContent({
-    model: MODEL,
-    contents: prompt,
-    config: {
-      temperature: 0.1,
-      maxOutputTokens: 768,
-    },
-  });
-
-  const text = response.text ?? '';
-  const parsed = parseJsonFromGemma<MatchResult>(text);
-  return parsed;
+  const userPrompt = buildOrgMatchingUserPrompt(donation, organizations);
+  const rawText = await generate(userPrompt, { temperature: 0.1, maxOutputTokens: 768 });
+  return parseJsonFromGemma<MatchResult>(rawText);
 };
 
 // ─── 3. Multilingual Notification ─────────────────────────────────────────────
@@ -106,19 +131,8 @@ export const generatePickupNotification = async (
   organization: { name: string; contactName?: string },
   language: 'english' | 'bengali' | 'hindi'
 ): Promise<NotificationResult> => {
-  const client = getClient();
-  const prompt = buildNotificationPrompt(donation, organization, language);
-
-  const response = await client.models.generateContent({
-    model: MODEL,
-    contents: prompt,
-    config: {
-      temperature: 0.4,
-      maxOutputTokens: 512,
-    },
-  });
-
-  const text = response.text ?? '';
-  const parsed = parseJsonFromGemma<NotificationResult>(text);
+  const userPrompt = buildNotificationUserPrompt(donation, organization, language);
+  const rawText = await generate(userPrompt, { temperature: 0.4, maxOutputTokens: 512 });
+  const parsed = parseJsonFromGemma<NotificationResult>(rawText);
   return { ...parsed, language };
 };
