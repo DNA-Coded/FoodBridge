@@ -1,267 +1,416 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { cn } from '../lib/utils';
+import { Button, Badge } from '../components/design-system';
 
-const SettingsNotifications = () => {
+interface Achievement {
+  id: string;
+  title: string;
+  desc: string;
+  icon: string;
+  unlocked: boolean;
+  date?: string;
+}
+
+interface LeaderboardEntry {
+  rank: number;
+  name: string;
+  mealsSaved: number;
+  type: string;
+  active: boolean;
+}
+
+const HISTORIC_DONATIONS = [
+  { id: 'don-1', date: 'July 2, 2026', food: 'Leftover Wedding Buffet (Curry/Rice)', amount: '150 meals', recipient: 'Helping Hands Shelter', status: 'Delivered' },
+  { id: 'don-2', date: 'June 28, 2026', food: 'Assorted Sourdough Loaves & Croissants', amount: '35 meals', recipient: 'Asha Homeless Shelter', status: 'Delivered' },
+  { id: 'don-3', date: 'June 15, 2026', food: 'Corporate Cafeteria Surplus Wraps', amount: '65 meals', recipient: 'Mother Teresa Home', status: 'Delivered' },
+  { id: 'don-4', date: 'May 30, 2026', food: 'Overstock Morning Bakery Bakes', amount: '80 meals', recipient: 'Hope Orphanage & Care', status: 'Delivered' }
+];
+
+const LEADERBOARD: LeaderboardEntry[] = [
+  { rank: 1, name: 'Metro Catering Corp', mealsSaved: 12400, type: 'Caterer', active: false },
+  { rank: 2, name: 'Grand Palace Hotel', mealsSaved: 8540, type: 'Hotel', active: true }, // Current donor
+  { rank: 3, name: 'The Daily Bread Bakers', mealsSaved: 6120, type: 'Bakery', active: false },
+  { rank: 4, name: 'Fintech Corporate Cafe', mealsSaved: 4200, type: 'Office', active: false },
+  { rank: 5, name: 'Salt Lake Supermarket', mealsSaved: 3890, type: 'Retailer', active: false }
+];
+
+const ACHIEVEMENTS: Achievement[] = [
+  { id: 'ach-1', title: 'First Rescue Logged', desc: 'Successfully submitted your first surplus food donation.', icon: 'volunteer_activism', unlocked: true, date: 'May 30, 2026' },
+  { id: 'ach-2', title: '100 Meals Saved', desc: 'Diverted 100+ servings from landfills into shelters.', icon: 'restaurant', unlocked: true, date: 'June 15, 2026' },
+  { id: 'ach-3', title: 'Carbon Rescuer', desc: 'Prevented over 100 kg of CO₂ equivalent decay.', icon: 'eco', unlocked: true, date: 'June 28, 2026' },
+  { id: 'ach-4', title: 'Community Champion', desc: 'Help 5 different verified NGOs with surplus food.', icon: 'emoji_events', unlocked: false },
+  { id: 'ach-5', title: 'Food Rescue Hero', desc: 'Redirect over 10,000 meals in a single year.', icon: 'shield', unlocked: false }
+];
+
+export default function SettingsNotifications() {
+  const navigate = useNavigate();
+
+  // Active vertical tab toggle: 'impact' (Phase 8), 'general', 'notifications'
+  const [activeTab, setActiveTab] = useState<'impact' | 'general' | 'notifications'>('impact');
+
+  // General profile settings states
+  const [orgName, setOrgName] = useState('Grand Palace Hotel');
+  const [contactEmail, setContactEmail] = useState('banquets@grandpalace.com');
+  const [contactPhone, setContactPhone] = useState('+1 (555) 019-2837');
+
+  // Notification toggles states
+  const [notifMatch, setNotifMatch] = useState(true);
+  const [notifReminder, setNotifReminder] = useState(true);
+  const [notifSystem, setNotifSystem] = useState(false);
+
   return (
-    <div className="bg-background text-on-background flex min-h-screen">
-      {/* SIDE NAV */}
-      <aside className="fixed left-0 top-0 h-full hidden lg:flex flex-col py-lg px-md w-64 bg-inverse-surface shadow-sm z-40">
-        {/* Header */}
-        <div className="flex items-center gap-sm px-md mb-2xl">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-on-primary fill text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_shipping</span>
-          </div>
-          <div>
-            <h2 className="font-headline-md text-headline-md text-surface-bright leading-none">FoodBridge</h2>
-            <p className="font-label-md text-label-md text-surface-variant mt-xs">Enterprise Logistics</p>
-          </div>
-        </div>
-        {/* CTA */}
-        <div className="px-md mb-xl">
-          <button className="w-full bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors duration-200 py-sm rounded-lg font-title-md text-title-md flex items-center justify-center gap-sm shadow-sm">
-            <span className="material-symbols-outlined text-[20px]">add</span>
-            New Donation
-          </button>
-        </div>
-        {/* Main Nav */}
-        <nav className="flex-1 flex flex-col gap-xs font-body-md text-body-md">
-          <Link to="/donor-dashboard" className="flex gap-md items-center cursor-pointer text-surface-variant hover:text-surface-bright px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 rounded-lg">
-            <span className="material-symbols-outlined">home</span>
-            Home
-          </Link>
-          <Link to="/donor-dashboard" className="flex gap-md items-center cursor-pointer text-surface-variant hover:text-surface-bright px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 rounded-lg">
-            <span className="material-symbols-outlined">card_giftcard</span>
-            Donations
-          </Link>
-          <Link to="/profile" className="flex gap-md items-center cursor-pointer text-surface-variant hover:text-surface-bright px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 rounded-lg">
-            <span className="material-symbols-outlined">corporate_fare</span>
-            Organizations
-          </Link>
-          <Link to="/track-donation" className="flex gap-md items-center cursor-pointer text-surface-variant hover:text-surface-bright px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 rounded-lg">
-            <span className="material-symbols-outlined">local_shipping</span>
-            Tracking
-          </Link>
-          {/* ACTIVE TAB: Settings */}
-          <Link to="/settings" className="flex gap-md items-center cursor-pointer bg-primary-container text-on-primary-container rounded-lg font-bold px-md py-sm transition-all duration-200">
-            <span className="material-symbols-outlined fill" style={{ fontVariationSettings: "'FILL' 1" }}>settings</span>
-            Settings
-          </Link>
-        </nav>
-        {/* Footer Nav */}
-        <div className="mt-auto border-t border-surface-variant/20 pt-md flex flex-col gap-xs font-body-md text-body-md">
-          <Link to="#" className="flex gap-md items-center cursor-pointer text-surface-variant hover:text-surface-bright px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 rounded-lg">
-            <span className="material-symbols-outlined">contact_support</span>
-            Support
-          </Link>
-          <Link to="/" className="flex gap-md items-center cursor-pointer text-surface-variant hover:text-surface-bright px-md py-sm hover:bg-surface-variant/10 transition-all duration-200 rounded-lg">
-            <span className="material-symbols-outlined">logout</span>
-            Log out
-          </Link>
-        </div>
-      </aside>
+    <div className="min-h-screen bg-gray-50/50 text-gray-600 font-sans antialiased text-left flex flex-col justify-between">
       
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 lg:ml-64 flex flex-col relative w-full">
-        {/* Mobile Top Bar */}
-        <div className="lg:hidden flex items-center justify-between p-md border-b border-outline-variant bg-surface-container-lowest sticky top-0 z-30">
-          <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">FoodBridge</h2>
-          <button className="p-xs rounded hover:bg-surface-container">
-            <span className="material-symbols-outlined">menu</span>
-          </button>
-        </div>
-        
-        <div className="max-w-[1024px] mx-auto w-full px-md md:px-xl lg:px-2xl py-xl lg:py-3xl">
-          {/* Page Header */}
-          <header className="mb-2xl">
-            <h1 className="font-display-lg text-display-lg text-on-background tracking-tight">Settings</h1>
-            <p className="font-body-lg text-body-lg text-on-surface-variant mt-sm">Manage your organization's logistics profile and notification preferences.</p>
-          </header>
-          
-          <div className="flex flex-col md:flex-row gap-2xl relative items-start">
-            {/* Inner Vertical Tab Navigation */}
-            <aside className="w-full md:w-56 shrink-0 md:sticky top-2xl">
-              <nav className="flex flex-row md:flex-col gap-unit overflow-x-auto md:overflow-visible pb-sm md:pb-0 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                <a className="whitespace-nowrap md:whitespace-normal flex items-center gap-sm px-md py-sm rounded-lg bg-surface-container text-on-surface font-title-md text-title-md transition-colors cursor-default" href="#general">
-                  <span className="material-symbols-outlined text-[20px]">person</span>
-                  General
-                </a>
-                <a className="whitespace-nowrap md:whitespace-normal flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md transition-colors cursor-pointer" href="#security">
-                  <span className="material-symbols-outlined text-[20px]">lock</span>
-                  Security
-                </a>
-                <a className="whitespace-nowrap md:whitespace-normal flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md transition-colors cursor-pointer" href="#notifications">
-                  <span className="material-symbols-outlined text-[20px]">notifications</span>
-                  Notifications
-                </a>
-                <a className="whitespace-nowrap md:whitespace-normal flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md transition-colors cursor-pointer" href="#billing">
-                  <span className="material-symbols-outlined text-[20px]">credit_card</span>
-                  Billing
-                </a>
-              </nav>
-            </aside>
-            
-            {/* Settings Content Panels */}
-            <div className="flex-1 w-full space-y-2xl">
-              {/* SECTION: GENERAL */}
-              <section className="space-y-md" id="general">
-                <h2 className="font-headline-md text-headline-md text-on-surface">General</h2>
-                
-                {/* Glassmorphism/Bento style card for Profile */}
-                <div className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-xl flex flex-col sm:flex-row items-start sm:items-center gap-lg">
-                  <div className="relative group">
-                    <img className="w-24 h-24 rounded-full object-cover border border-outline-variant bg-surface-container" data-alt="A modern, high-quality, front-facing corporate headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIg_NlmPMqv8FX8xyjXRGiYgh6iuMBeCtuasNOObBx6X5ndJxC3d95HqsSCZ9pw8njMMDjd_Cv9lqUJzUd5-YL-x5LGD_AY3mBWCHJlu_hL_u3dzTWmUwVxlS1JqjU-xHHEReGLfPw5_2sra3uRcMggCsGaRRKUHW4k1vVZyKLy8MRjqM_6wmn-U1p7YD6POs3q61-sa6BnShy0Bz7-RDFc44JthvVZJ9-DcNvUeudzhRSvwSKlcjXFbAitxl0FDxab4PVVKzZ2Tc" alt="Profile" />
-                    <div className="absolute inset-0 bg-inverse-surface/40 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
-                      <span className="material-symbols-outlined text-surface-bright">edit</span>
-                    </div>
-                  </div>
-                  <div className="flex-1 space-y-sm">
-                    <h3 className="font-title-md text-title-md text-on-surface">Organization Logo</h3>
-                    <p className="font-body-md text-body-md text-on-surface-variant max-w-sm">This image will be visible on manifests and to receiving partners. Recommended size is 256x256px.</p>
-                    <div className="flex gap-sm mt-md">
-                      <button className="px-md py-sm bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg transition-colors border border-outline-variant shadow-sm">Change Image</button>
-                      <button className="px-md py-sm text-error hover:bg-error-container/50 font-label-md text-label-md rounded-lg transition-colors">Remove</button>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Organization Details Form */}
-                <div className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-xl">
-                  <h3 className="font-title-md text-title-md text-on-surface border-b border-outline-variant pb-sm mb-lg">Organization Details</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-lg">
-                    <div className="space-y-xs sm:col-span-2">
-                      <label className="font-label-md text-label-md text-on-surface-variant block">Organization Name</label>
-                      <input className="w-full rounded-lg border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface shadow-sm" type="text" defaultValue="FoodBridge Logistics Co." />
-                    </div>
-                    <div className="space-y-xs">
-                      <label className="font-label-md text-label-md text-on-surface-variant block">Contact Email</label>
-                      <input className="w-full rounded-lg border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface shadow-sm" type="email" defaultValue="ops@foodbridge.com" />
-                    </div>
-                    <div className="space-y-xs">
-                      <label className="font-label-md text-label-md text-on-surface-variant block">Phone Number</label>
-                      <input className="w-full rounded-lg border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface shadow-sm" type="tel" defaultValue="+1 (555) 019-2837" />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Localization Form */}
-                <div className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-xl">
-                  <h3 className="font-title-md text-title-md text-on-surface border-b border-outline-variant pb-sm mb-lg">Localization</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-lg">
-                    <div className="space-y-xs">
-                      <label className="font-label-md text-label-md text-on-surface-variant block">Language</label>
-                      <select className="w-full rounded-lg border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface shadow-sm">
-                        <option>English (US)</option>
-                        <option>Spanish (ES)</option>
-                        <option>French (FR)</option>
-                      </select>
-                    </div>
-                    <div className="space-y-xs">
-                      <label className="font-label-md text-label-md text-on-surface-variant block">Timezone</label>
-                      <select className="w-full rounded-lg border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface shadow-sm" defaultValue="Eastern Time (US & Canada)">
-                        <option>Pacific Time (US & Canada)</option>
-                        <option>Eastern Time (US & Canada)</option>
-                        <option>Central Time (US & Canada)</option>
-                        <option>Coordinated Universal Time (UTC)</option>
-                      </select>
-                      <p className="font-label-md text-label-md text-on-surface-variant mt-xs opacity-70">Used for pickup ETA calculations.</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end pt-md">
-                  <button className="bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container px-lg py-sm rounded-lg font-title-md text-title-md shadow-sm transition-colors">
-                    Save Changes
-                  </button>
-                </div>
-              </section>
-              
-              <div className="h-px bg-outline-variant w-full my-xl"></div>
-              
-              {/* SECTION: NOTIFICATIONS */}
-              <section className="space-y-md" id="notifications">
-                <h2 className="font-headline-md text-headline-md text-on-surface">Notifications</h2>
-                
-                <div className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
-                  {/* Table-like layout for toggles */}
-                  <div className="grid grid-cols-12 gap-sm p-md border-b border-outline-variant bg-surface-container-low hidden sm:grid">
-                    <div className="col-span-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Event</div>
-                    <div className="col-span-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Email</div>
-                    <div className="col-span-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">SMS</div>
-                  </div>
-                  
-                  {/* Row 1: New Match */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-md p-lg border-b border-outline-variant items-center hover:bg-surface/50 transition-colors">
-                    <div className="sm:col-span-6">
-                      <h4 className="font-title-md text-title-md text-on-surface">New Match Available</h4>
-                      <p className="font-body-md text-body-md text-on-surface-variant mt-unit">Get notified when a surplus donation matches your criteria.</p>
-                    </div>
-                    <div className="sm:col-span-3 flex sm:justify-center items-center gap-md sm:gap-0">
-                      <span className="sm:hidden font-label-md text-label-md text-on-surface-variant w-16">Email</span>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input defaultChecked className="sr-only peer" type="checkbox" value="" />
-                        <div className="w-11 h-6 bg-surface-container-highest peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
-                    </div>
-                    <div className="sm:col-span-3 flex sm:justify-center items-center gap-md sm:gap-0 mt-sm sm:mt-0">
-                      <span className="sm:hidden font-label-md text-label-md text-on-surface-variant w-16">SMS</span>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input defaultChecked className="sr-only peer" type="checkbox" value="" />
-                        <div className="w-11 h-6 bg-surface-container-highest peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
-                    </div>
-                  </div>
-                  
-                  {/* Row 2: Pickup Reminders */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-md p-lg border-b border-outline-variant items-center hover:bg-surface/50 transition-colors">
-                    <div className="sm:col-span-6">
-                      <h4 className="font-title-md text-title-md text-on-surface">Pickup Reminders</h4>
-                      <p className="font-body-md text-body-md text-on-surface-variant mt-unit">Alerts 1 hour before scheduled logistics pickup.</p>
-                    </div>
-                    <div className="sm:col-span-3 flex sm:justify-center items-center gap-md sm:gap-0">
-                      <span className="sm:hidden font-label-md text-label-md text-on-surface-variant w-16">Email</span>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input className="sr-only peer" type="checkbox" value="" />
-                        <div className="w-11 h-6 bg-surface-container-highest peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
-                    </div>
-                    <div className="sm:col-span-3 flex sm:justify-center items-center gap-md sm:gap-0 mt-sm sm:mt-0">
-                      <span className="sm:hidden font-label-md text-label-md text-on-surface-variant w-16">SMS</span>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input defaultChecked className="sr-only peer" type="checkbox" value="" />
-                        <div className="w-11 h-6 bg-surface-container-highest peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
-                    </div>
-                  </div>
-                  
-                  {/* Row 3: System Updates */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-md p-lg items-center hover:bg-surface/50 transition-colors">
-                    <div className="sm:col-span-6">
-                      <h4 className="font-title-md text-title-md text-on-surface">System Updates</h4>
-                      <p className="font-body-md text-body-md text-on-surface-variant mt-unit">Platform maintenance and feature release announcements.</p>
-                    </div>
-                    <div className="sm:col-span-3 flex sm:justify-center items-center gap-md sm:gap-0">
-                      <span className="sm:hidden font-label-md text-label-md text-on-surface-variant w-16">Email</span>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input defaultChecked className="sr-only peer" type="checkbox" value="" />
-                        <div className="w-11 h-6 bg-surface-container-highest peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
-                    </div>
-                    <div className="sm:col-span-3 flex sm:justify-center items-center gap-md sm:gap-0 mt-sm sm:mt-0">
-                      <span className="sm:hidden font-label-md text-label-md text-on-surface-variant w-16">SMS</span>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input className="sr-only peer" disabled type="checkbox" value="" />
-                        <div className="w-11 h-6 bg-surface-container-highest opacity-50 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
+      {/* HEADER */}
+      <nav className="sticky top-0 z-40 w-full border-b border-gray-100 bg-white shadow-sm">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-lg">
+          <Link to="/donor-dashboard" className="flex items-center gap-xs cursor-pointer select-none">
+            <svg className="h-6 w-6 text-primary-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M4 19C4 19 6 15 12 15C18 15 20 19 20 19" />
+              <path d="M12 15V3" />
+            </svg>
+            <span className="font-sans text-md font-bold tracking-tight text-gray-900">
+              FoodBridge <span className="text-primary-700">AI</span>
+            </span>
+          </Link>
+
+          {/* Top Menu Items */}
+          <div className="hidden md:flex items-center gap-md text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <Link to="/donor-dashboard" className="hover:text-primary-700 transition-colors">Dashboard</Link>
+            <Link to="/profile" className="hover:text-primary-700 transition-colors">Verified Orgs</Link>
+            <Link to="/track-donation" className="hover:text-primary-700 transition-colors">Track Runs</Link>
+            <Link to="/settings" className="text-primary-700 font-bold border-b-2 border-primary-700 pb-sm pt-sm">Impact &amp; Settings</Link>
+          </div>
+
+          <div className="flex items-center gap-xs">
+            <Button size="sm" onClick={() => navigate('/create-donation')} className="bg-primary-700 hover:bg-primary-800 text-white font-bold text-xs uppercase px-md py-sm rounded-lg shadow-sm">
+              Donate Food
+            </Button>
           </div>
         </div>
-      </main>
+      </nav>
+
+      {/* CORE HUB LAYOUT */}
+      <div className="flex-1 max-w-7xl w-full mx-auto px-lg py-xl">
+        
+        <header className="mb-lg space-y-2xs">
+          <h1 className="text-2xl font-black text-gray-900 leading-none">Profile &amp; Settings Center</h1>
+          <p className="text-xs text-gray-400">
+            Monitor community milestones, track rescue badges, and manage logistics profile coordinates.
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-xl items-start">
+          
+          {/* LEFT COLUMN: Inner Vertical Tab Navigation */}
+          <aside className="lg:col-span-3">
+            <nav className="flex flex-row lg:flex-col gap-xs overflow-x-auto lg:overflow-visible pb-sm lg:pb-0 scrollbar-hide text-xs font-bold uppercase tracking-wider">
+              <button 
+                onClick={() => setActiveTab('impact')}
+                className={cn("w-full text-left px-md py-sm rounded-xl transition-all duration-200 flex items-center gap-sm whitespace-nowrap",
+                  activeTab === 'impact' ? "bg-primary-700 text-white shadow-sm" : "bg-white border border-gray-150 text-gray-400 hover:text-gray-900"
+                )}
+              >
+                <span className="material-symbols-outlined text-[18px]">stars</span>
+                Impact &amp; Achievements
+              </button>
+              
+              <button 
+                onClick={() => setActiveTab('general')}
+                className={cn("w-full text-left px-md py-sm rounded-xl transition-all duration-200 flex items-center gap-sm whitespace-nowrap",
+                  activeTab === 'general' ? "bg-primary-700 text-white shadow-sm" : "bg-white border border-gray-150 text-gray-400 hover:text-gray-900"
+                )}
+              >
+                <span className="material-symbols-outlined text-[18px]">person</span>
+                Logistics Profile
+              </button>
+
+              <button 
+                onClick={() => setActiveTab('notifications')}
+                className={cn("w-full text-left px-md py-sm rounded-xl transition-all duration-200 flex items-center gap-sm whitespace-nowrap",
+                  activeTab === 'notifications' ? "bg-primary-700 text-white shadow-sm" : "bg-white border border-gray-150 text-gray-400 hover:text-gray-900"
+                )}
+              >
+                <span className="material-symbols-outlined text-[18px]">notifications</span>
+                Notification Settings
+              </button>
+            </nav>
+          </aside>
+
+          {/* RIGHT COLUMN: Settings Panels & Dynamic Views */}
+          <div className="lg:col-span-9 space-y-md">
+            
+            {/* ========================================== */}
+            {/* TAB: PROFILE & IMPACT HUB (Phase 8 Rebuild) */}
+            {/* ========================================== */}
+            {activeTab === 'impact' && (
+              <div className="space-y-md animate-slide-up">
+                
+                {/* Profile metrics banner */}
+                <div className="bg-white border border-gray-200 rounded-3xl p-lg shadow-sm grid grid-cols-2 md:grid-cols-4 gap-md">
+                  <div className="text-center p-sm bg-gray-50 rounded-2xl border border-gray-100">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">Meals Saved</span>
+                    <p className="text-2xl font-black text-primary-700 mt-2xs">2,450</p>
+                    <span className="text-[9px] text-gray-400">Meals Redirected</span>
+                  </div>
+                  <div className="text-center p-sm bg-gray-50 rounded-2xl border border-gray-100">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">Food Rescued</span>
+                    <p className="text-2xl font-black text-primary-700 mt-2xs">410 kg</p>
+                    <span className="text-[9px] text-gray-400">Total weight logs</span>
+                  </div>
+                  <div className="text-center p-sm bg-gray-50 rounded-2xl border border-gray-100">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">Families Helped</span>
+                    <p className="text-2xl font-black text-primary-700 mt-2xs">82</p>
+                    <span className="text-[9px] text-gray-400">Shelter Households</span>
+                  </div>
+                  <div className="text-center p-sm bg-emerald-50 rounded-2xl border border-emerald-100">
+                    <span className="text-[9px] font-bold text-emerald-800 uppercase tracking-widest block">Carbon prevent</span>
+                    <p className="text-2xl font-black text-emerald-700 mt-2xs">1,025 kg</p>
+                    <span className="text-[9px] text-emerald-600 font-bold">CO₂ Equivalents</span>
+                  </div>
+                </div>
+
+                {/* Grid: Achievements & Community ranking */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-md">
+                  
+                  {/* Achievements Badges (Left) */}
+                  <div className="md:col-span-7 bg-white border border-gray-200 rounded-3xl p-lg shadow-sm space-y-md">
+                    <h3 className="text-xs font-bold text-gray-900 uppercase tracking-widest border-b border-gray-150 pb-2xs">
+                      Rescue Badges &amp; Achievements
+                    </h3>
+
+                    <div className="space-y-sm">
+                      {ACHIEVEMENTS.map(ach => (
+                        <div key={ach.id} className={cn("p-sm border rounded-2xl flex items-center gap-sm text-xs relative",
+                          ach.unlocked ? "border-emerald-150 bg-emerald-50/10" : "border-gray-100 bg-gray-50/50 opacity-60"
+                        )}>
+                          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border",
+                            ach.unlocked ? "bg-emerald-100 border-emerald-250 text-emerald-700" : "bg-gray-100 border-gray-200 text-gray-400"
+                          )}>
+                            <span className="material-symbols-outlined text-[18px]">{ach.icon}</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center">
+                              <h4 className="font-bold text-gray-900">{ach.title}</h4>
+                              {ach.unlocked ? (
+                                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/50 px-sm py-[2px] rounded">
+                                  Unlocked {ach.date}
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold text-gray-400 bg-gray-100 px-sm py-[2px] rounded">
+                                  Locked
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-gray-400 mt-3xs">{ach.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Leaderboards / Ranking (Right) */}
+                  <div className="md:col-span-5 bg-white border border-gray-200 rounded-3xl p-lg shadow-sm space-y-md">
+                    <h3 className="text-xs font-bold text-gray-900 uppercase tracking-widest border-b border-gray-150 pb-2xs">
+                      Regional Leaderboard
+                    </h3>
+
+                    <div className="space-y-xs">
+                      {LEADERBOARD.map(user => (
+                        <div key={user.rank} className={cn("p-xs border rounded-xl flex justify-between items-center text-[10px] font-semibold",
+                          user.active ? "border-primary-500 bg-primary-50/20" : "border-gray-100 bg-white"
+                        )}>
+                          <div className="flex items-center gap-xs">
+                            <span className="font-bold text-gray-400 w-4">#{user.rank}</span>
+                            <div>
+                              <p className="text-gray-900 font-bold">{user.name}</p>
+                              <span className="text-[8px] uppercase tracking-wider text-gray-400">{user.type}</span>
+                            </div>
+                          </div>
+                          <span className="text-xs font-black text-primary-700">
+                            {user.mealsSaved.toLocaleString()} meals
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-sm bg-primary-50 border border-primary-100 text-primary-800 rounded-xl text-[10px] text-center">
+                      🏆 <strong>Regional Rank:</strong> You are currently in the Top 3% of hotel donors in Salt Lake District! Keep donating to unlock the 'Community Champion' badge.
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Historical Contributions ledger & Certificates */}
+                <div className="bg-white border border-gray-200 rounded-3xl p-lg shadow-sm space-y-md">
+                  <h3 className="text-xs font-bold text-gray-900 uppercase tracking-widest border-b border-gray-150 pb-2xs">
+                    Historic Rescue Ledger &amp; Certificates
+                  </h3>
+
+                  <div className="space-y-xs">
+                    {HISTORIC_DONATIONS.map(don => (
+                      <div key={don.id} className="p-sm border border-gray-100 rounded-2xl flex flex-wrap justify-between items-center gap-sm text-xs">
+                        <div className="space-y-3xs">
+                          <div className="flex items-center gap-xs">
+                            <span className="font-bold text-gray-900">{don.food}</span>
+                            <span className="text-[9px] font-bold text-emerald-800 bg-emerald-50 px-sm py-[2px] rounded border border-emerald-150">
+                              {don.status}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-gray-400">
+                            Delivered to <strong>{don.recipient}</strong> on {don.date} • {don.amount}
+                          </p>
+                        </div>
+
+                        <div className="flex gap-xs">
+                          <Button 
+                            variant="outline"
+                            onClick={() => alert(`Certificate loaded for ${don.id}`)}
+                            className="border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-[9px] uppercase px-sm py-xs rounded-lg"
+                          >
+                            Download Badge Certificate
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* ========================================== */}
+            {/* TAB: GENERAL SETTINGS                      */}
+            {/* ========================================== */}
+            {activeTab === 'general' && (
+              <div className="bg-white border border-gray-200 rounded-3xl p-lg shadow-sm space-y-md text-left animate-slide-up">
+                
+                <div>
+                  <h3 className="text-md font-bold text-gray-900">Banquet &amp; Logistics Coordinates</h3>
+                  <p className="text-xs text-gray-400 mt-2xs">Configure your outlet locations for E-bike dispatching.</p>
+                </div>
+
+                <div className="space-y-sm">
+                  <div className="space-y-2xs">
+                    <label className="text-xs font-bold text-gray-900">Organization Name</label>
+                    <input 
+                      type="text"
+                      value={orgName}
+                      onChange={(e) => setOrgName(e.target.value)}
+                      className="w-full px-md py-sm border border-gray-200 rounded-lg text-xs outline-none focus:border-primary-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
+                    <div className="space-y-2xs">
+                      <label className="text-xs font-bold text-gray-900">Banquet Manager Email</label>
+                      <input 
+                        type="email"
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        className="w-full px-md py-sm border border-gray-200 rounded-lg text-xs outline-none focus:border-primary-500"
+                      />
+                    </div>
+                    <div className="space-y-2xs">
+                      <label className="text-xs font-bold text-gray-900">On-Call Phone Number</label>
+                      <input 
+                        type="text"
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                        className="w-full px-md py-sm border border-gray-200 rounded-lg text-xs outline-none focus:border-primary-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-md border-t border-gray-100 flex justify-end">
+                  <Button 
+                    onClick={() => alert('Logistics profile saved')}
+                    className="bg-primary-700 hover:bg-primary-800 text-white font-bold text-xs uppercase px-lg py-md rounded-lg shadow-sm"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+
+              </div>
+            )}
+
+            {/* ========================================== */}
+            {/* TAB: NOTIFICATION PREFERENCES             */}
+            {/* ========================================== */}
+            {activeTab === 'notifications' && (
+              <div className="bg-white border border-gray-200 rounded-3xl p-lg shadow-sm space-y-md text-left animate-slide-up">
+                
+                <div>
+                  <h3 className="text-md font-bold text-gray-900">Notification Channels</h3>
+                  <p className="text-xs text-gray-400 mt-2xs">Select how you want to be alerted on new NGO matches.</p>
+                </div>
+
+                <div className="space-y-sm">
+                  
+                  {/* Match alert toggle */}
+                  <div className="flex justify-between items-center p-sm bg-gray-50 border border-gray-100 rounded-2xl">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Intelligent Match Alerts</h4>
+                      <p className="text-[10px] text-gray-400">Receive immediate SMS when a high-compatibility shelter match is found.</p>
+                    </div>
+                    <input 
+                      type="checkbox"
+                      checked={notifMatch}
+                      onChange={(e) => setNotifMatch(e.target.checked)}
+                      className="w-4 h-4 cursor-pointer text-primary-700 border-gray-300 rounded focus:ring-primary-500"
+                    />
+                  </div>
+
+                  {/* Reminder alert toggle */}
+                  <div className="flex justify-between items-center p-sm bg-gray-50 border border-gray-100 rounded-2xl">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Courier Pickup Reminders</h4>
+                      <p className="text-[10px] text-gray-400">Receive SMS 30 minutes before courier ETA collection window.</p>
+                    </div>
+                    <input 
+                      type="checkbox"
+                      checked={notifReminder}
+                      onChange={(e) => setNotifReminder(e.target.checked)}
+                      className="w-4 h-4 cursor-pointer text-primary-700 border-gray-300 rounded focus:ring-primary-500"
+                    />
+                  </div>
+
+                  {/* System updates toggle */}
+                  <div className="flex justify-between items-center p-sm bg-gray-50 border border-gray-100 rounded-2xl">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Landfill Carbon Offsets Summary</h4>
+                      <p className="text-[10px] text-gray-400">Get monthly digests compiling your prevented landfill methane emissions.</p>
+                    </div>
+                    <input 
+                      type="checkbox"
+                      checked={notifSystem}
+                      onChange={(e) => setNotifSystem(e.target.checked)}
+                      className="w-4 h-4 cursor-pointer text-primary-700 border-gray-300 rounded focus:ring-primary-500"
+                    />
+                  </div>
+
+                </div>
+
+                <div className="pt-md border-t border-gray-100 flex justify-end">
+                  <Button 
+                    onClick={() => alert('Notifications saved')}
+                    className="bg-primary-700 hover:bg-primary-800 text-white font-bold text-xs uppercase px-lg py-md rounded-lg shadow-sm"
+                  >
+                    Save Alerts
+                  </Button>
+                </div>
+
+              </div>
+            )}
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
   );
-};
-
-export default SettingsNotifications;
+}

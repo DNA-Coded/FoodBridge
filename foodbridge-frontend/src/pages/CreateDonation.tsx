@@ -18,13 +18,72 @@ const DEMO_FILL_DATA = {
   accessibility: 'Loading Dock Available'
 };
 
+const NGO_RECOMMENDATIONS = [
+  {
+    id: 'ngo-1',
+    name: 'Helping Hands Shelter',
+    distance: '1.8 km',
+    travelTime: '8 mins',
+    matchScore: 98,
+    capacity: 'High (Accepting 200+ meals)',
+    pickupAvailability: 'Immediate Dispatch Ready',
+    estCollection: '12 mins',
+    acceptedTypes: 'Prepared Hot Meals, Bakery, Produce',
+    reasoning: [
+      'Accepts cooked vegetarian meals',
+      'Capacity available now for 150+ servings',
+      'Pickup vehicle (E-Bike Courier) active in Salt Lake',
+      'Under 2 km distance ensuring thermal safety compliance',
+      'Can distribute meals to residents within 2 hours'
+    ],
+    badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    recommended: true
+  },
+  {
+    id: 'ngo-2',
+    name: 'Kolkata Community Kitchen',
+    distance: '3.4 km',
+    travelTime: '15 mins',
+    matchScore: 89,
+    capacity: 'Medium (Accepting 100 meals)',
+    pickupAvailability: 'Within 30 minutes',
+    estCollection: '35 mins',
+    acceptedTypes: 'Prepared Hot Meals, Raw Produce, Dry Goods',
+    reasoning: [
+      'Accepts prepared hot buffet items',
+      'Capacity currently capped at 100 servings (needs partial split)',
+      'Delivery vehicle is currently completing another run',
+      'Safe transit window is close to the 4-hour limit'
+    ],
+    badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+    recommended: false
+  },
+  {
+    id: 'ngo-3',
+    name: 'Hope Orphanage & Care',
+    distance: '5.1 km',
+    travelTime: '22 mins',
+    matchScore: 76,
+    capacity: 'Low (Accepting 50 meals)',
+    pickupAvailability: 'Next day preferred',
+    estCollection: '90 mins',
+    acceptedTypes: 'Bakery, Dairy, Dry Goods, Fruit Packets',
+    reasoning: [
+      'Prefers shelf-stable baked goods and raw fruit packs',
+      'Limited hot buffet storage capacity',
+      'No active transport dispatch available for late-night pickup'
+    ],
+    badgeColor: 'bg-gray-50 text-gray-700 border-gray-200',
+    recommended: false
+  }
+];
+
 export default function CreateDonation() {
   const navigate = useNavigate();
 
-  // Multi-step index: 1: Food Info, 2: Pickup, 3: Media, 4: AI Loader, 5: AI Report, 6: Confirmation, 7: Success
+  // Multi-step index:
+  // 1: Food Info, 2: Pickup Logistics, 3: Media Upload, 4: AI Loader, 5: AI Report, 6: NGO Matching, 7: Confirmation, 8: Success
   const [currentStep, setCurrentStep] = useState(1);
-  
-  // Validation error state
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Form Field States
@@ -44,6 +103,9 @@ export default function CreateDonation() {
   // Media upload states
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, size: string, progress: number, previewUrl?: string}[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Selected matched NGO
+  const [selectedNgoId, setSelectedNgoId] = useState('ngo-1');
 
   // AI Pre-Analysis Loader Sub-Steps
   const [aiLoaderStep, setAiLoaderStep] = useState(0);
@@ -69,7 +131,6 @@ export default function CreateDonation() {
     setContactPerson(DEMO_FILL_DATA.contactPerson);
     setAccessibility(DEMO_FILL_DATA.accessibility);
 
-    // Also inject mock images
     setUploadedFiles([
       { name: 'buffet_trays_1.jpg', size: '1.2 MB', progress: 100, previewUrl: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=400&q=80' },
       { name: 'buffet_pans_2.jpg', size: '950 KB', progress: 100, previewUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80' }
@@ -78,7 +139,6 @@ export default function CreateDonation() {
     setErrors({});
   };
 
-  // Step 1 Validation
   const validateStep1 = () => {
     const errs: Record<string, string> = {};
     if (!foodName.trim()) errs.foodName = 'Food name is required';
@@ -92,7 +152,6 @@ export default function CreateDonation() {
     return Object.keys(errs).length === 0;
   };
 
-  // Step 2 Validation
   const validateStep2 = () => {
     const errs: Record<string, string> = {};
     if (!address.trim()) errs.address = 'Pickup address is required';
@@ -103,7 +162,6 @@ export default function CreateDonation() {
     return Object.keys(errs).length === 0;
   };
 
-  // Simulate file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploading(true);
@@ -116,7 +174,6 @@ export default function CreateDonation() {
 
       setUploadedFiles(prev => [...prev, ...newFiles]);
 
-      // Animate upload progress
       let currentProgress = 0;
       const interval = setInterval(() => {
         currentProgress += 20;
@@ -131,19 +188,20 @@ export default function CreateDonation() {
     }
   };
 
-  // Step 4 Loader Timer (Anticipation Screen)
   useEffect(() => {
     if (currentStep === 4) {
       setAiLoaderStep(0);
       const timers = [
-        setTimeout(() => setAiLoaderStep(1), 1000),
-        setTimeout(() => setAiLoaderStep(2), 2000),
-        setTimeout(() => setAiLoaderStep(3), 3000),
-        setTimeout(() => setCurrentStep(5), 4500) // Transit to Step 5: Report
+        setTimeout(() => setAiLoaderStep(1), 800),
+        setTimeout(() => setAiLoaderStep(2), 1600),
+        setTimeout(() => setAiLoaderStep(3), 2400),
+        setTimeout(() => setCurrentStep(5), 3200) // Transit to Step 5: Report
       ];
       return () => timers.forEach(clearTimeout);
     }
   }, [currentStep]);
+
+  const selectedNgo = NGO_RECOMMENDATIONS.find(ngo => ngo.id === selectedNgoId) || NGO_RECOMMENDATIONS[0];
 
   return (
     <div className="min-h-screen bg-gray-50/50 text-gray-600 font-sans antialiased text-left">
@@ -161,11 +219,10 @@ export default function CreateDonation() {
             </span>
           </Link>
 
-          {/* Quick Sandbox tool to fill mock fields */}
           {currentStep <= 3 && (
             <button 
               onClick={handleAutoFill}
-              className="text-[10px] font-bold uppercase tracking-widest text-primary-700 bg-primary-100/50 px-sm py-xs rounded-lg hover:bg-primary-100 transition-colors border border-primary-200"
+              className="text-[10px] font-bold uppercase tracking-widest text-primary-700 bg-primary-100/50 px-sm py-xs rounded-lg hover:bg-primary-100 transition-colors border border-primary-200 animate-pulse"
             >
               ⚡ Auto-Fill Wedding Sample
             </button>
@@ -180,27 +237,27 @@ export default function CreateDonation() {
       {/* CORE WORKFLOW AREA */}
       <div className="mx-auto max-w-3xl px-lg py-xl">
         
-        {/* STEPPER PROGRESS INDICATOR (For Steps 1 to 6) */}
-        {currentStep <= 6 && (
+        {/* STEPPER PROGRESS BAR */}
+        {currentStep <= 7 && (
           <div className="mb-xl">
-            {/* Steps labels */}
             <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-gray-400">
-              <span className={cn(currentStep >= 1 ? "text-primary-700" : "")}>01 Food</span>
+              <span className={cn(currentStep >= 1 ? "text-primary-700" : "")}>01 Food Details</span>
               <span className={cn(currentStep >= 2 ? "text-primary-700" : "")}>02 Logistics</span>
               <span className={cn(currentStep >= 3 ? "text-primary-700" : "")}>03 Media</span>
               <span className={cn(currentStep >= 5 ? "text-primary-700" : "")}>04 AI Audit</span>
-              <span className={cn(currentStep >= 6 ? "text-primary-700" : "")}>05 Confirm</span>
+              <span className={cn(currentStep >= 6 ? "text-primary-700" : "")}>05 Matching</span>
+              <span className={cn(currentStep >= 7 ? "text-primary-700" : "")}>06 Confirm</span>
             </div>
             
-            {/* Progress Bar meter */}
             <div className="w-full bg-gray-200 h-1.5 rounded-full mt-xs overflow-hidden">
               <div className="h-full bg-primary-700 transition-all duration-300" style={{
                 width: `${
-                  currentStep === 1 ? 20 :
-                  currentStep === 2 ? 40 :
-                  currentStep === 3 ? 60 :
-                  currentStep === 4 ? 75 :
-                  currentStep === 5 ? 85 : 100
+                  currentStep === 1 ? 15 :
+                  currentStep === 2 ? 30 :
+                  currentStep === 3 ? 45 :
+                  currentStep === 4 ? 60 :
+                  currentStep === 5 ? 75 :
+                  currentStep === 6 ? 88 : 100
                 }%`
               }} />
             </div>
@@ -216,7 +273,6 @@ export default function CreateDonation() {
             </div>
 
             <div className="space-y-sm">
-              {/* Food Name */}
               <div className="space-y-2xs">
                 <label className="text-xs font-bold text-gray-900" htmlFor="foodName">Item Description Name</label>
                 <input 
@@ -232,10 +288,7 @@ export default function CreateDonation() {
                 {errors.foodName && <p className="text-[10px] text-red-600 font-semibold">{errors.foodName}</p>}
               </div>
 
-              {/* Grid: Category & Volume */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
-                
-                {/* Category select */}
                 <div className="space-y-2xs">
                   <label className="text-xs font-bold text-gray-900" htmlFor="category">Category</label>
                   <select 
@@ -255,7 +308,6 @@ export default function CreateDonation() {
                   {errors.category && <p className="text-[10px] text-red-600 font-semibold">{errors.category}</p>}
                 </div>
 
-                {/* Weight / Containers description */}
                 <div className="space-y-2xs">
                   <label className="text-xs font-bold text-gray-900" htmlFor="quantity">Physical Volume / Weight</label>
                   <input 
@@ -270,13 +322,9 @@ export default function CreateDonation() {
                   />
                   {errors.quantity && <p className="text-[10px] text-red-600 font-semibold">{errors.quantity}</p>}
                 </div>
-
               </div>
 
-              {/* Grid: Meals Count & Expiry */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-sm">
-                
-                {/* Meals served count estimate */}
                 <div className="space-y-2xs">
                   <label className="text-xs font-bold text-gray-900" htmlFor="mealCount">Est. Servings Count</label>
                   <input 
@@ -292,7 +340,6 @@ export default function CreateDonation() {
                   {errors.mealCount && <p className="text-[10px] text-red-600 font-semibold">{errors.mealCount}</p>}
                 </div>
 
-                {/* Cooked/Prep timestamp */}
                 <div className="space-y-2xs">
                   <label className="text-xs font-bold text-gray-900" htmlFor="prepTime">Preparation Time</label>
                   <input 
@@ -307,7 +354,6 @@ export default function CreateDonation() {
                   {errors.prepTime && <p className="text-[10px] text-red-600 font-semibold">{errors.prepTime}</p>}
                 </div>
 
-                {/* Freshness/Expiry Estimate */}
                 <div className="space-y-2xs">
                   <label className="text-xs font-bold text-gray-900" htmlFor="expiryEstimate">Freshness Window</label>
                   <select 
@@ -326,11 +372,9 @@ export default function CreateDonation() {
                   </select>
                   {errors.expiryEstimate && <p className="text-[10px] text-red-600 font-semibold">{errors.expiryEstimate}</p>}
                 </div>
-
               </div>
             </div>
 
-            {/* Next buttons */}
             <div className="pt-md border-t border-gray-100 flex justify-between items-center">
               <Button variant="ghost" size="sm" onClick={() => navigate('/donor-dashboard')} className="text-xs uppercase font-bold text-gray-400">
                 Cancel
@@ -354,7 +398,6 @@ export default function CreateDonation() {
             </div>
 
             <div className="space-y-sm">
-              {/* Pickup Address */}
               <div className="space-y-2xs">
                 <label className="text-xs font-bold text-gray-900" htmlFor="address">Full Pickup Address</label>
                 <input 
@@ -370,10 +413,7 @@ export default function CreateDonation() {
                 {errors.address && <p className="text-[10px] text-red-600 font-semibold">{errors.address}</p>}
               </div>
 
-              {/* Grid: Pickup window & Contact */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
-                
-                {/* Pickup window timings */}
                 <div className="space-y-2xs">
                   <label className="text-xs font-bold text-gray-900" htmlFor="pickupWindow">Pickup Window (Target Time)</label>
                   <input 
@@ -381,7 +421,7 @@ export default function CreateDonation() {
                     id="pickupWindow"
                     value={pickupWindow}
                     onChange={(e) => setPickupWindow(e.target.value)}
-                    placeholder="e.g., Today, 11:00 PM - Midnight"
+                    placeholder="e.g., Tonight, 11:00 PM - Midnight"
                     className={cn("w-full px-md py-sm border rounded-lg text-xs outline-none focus:border-primary-500",
                       errors.pickupWindow ? "border-red-500 bg-red-50/20" : "border-gray-200"
                     )}
@@ -389,7 +429,6 @@ export default function CreateDonation() {
                   {errors.pickupWindow && <p className="text-[10px] text-red-600 font-semibold">{errors.pickupWindow}</p>}
                 </div>
 
-                {/* Contact phone/name */}
                 <div className="space-y-2xs">
                   <label className="text-xs font-bold text-gray-900" htmlFor="contactPerson">On-Site Contact Person</label>
                   <input 
@@ -404,10 +443,8 @@ export default function CreateDonation() {
                   />
                   {errors.contactPerson && <p className="text-[10px] text-red-600 font-semibold">{errors.contactPerson}</p>}
                 </div>
-
               </div>
 
-              {/* Loading dock accessibility */}
               <div className="space-y-2xs">
                 <label className="text-xs font-bold text-gray-900" htmlFor="accessibility">Accessibility Profile</label>
                 <select 
@@ -423,7 +460,6 @@ export default function CreateDonation() {
                 </select>
               </div>
 
-              {/* Special logistics instructions */}
               <div className="space-y-2xs">
                 <label className="text-xs font-bold text-gray-900" htmlFor="instructions">Special Instructions / Gates</label>
                 <textarea 
@@ -436,7 +472,7 @@ export default function CreateDonation() {
                 />
               </div>
 
-              {/* Visual Map Placeholder (Do not integrate maps yet) */}
+              {/* Visual Map Placeholder */}
               <div className="p-lg bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200 min-h-[120px] flex-col text-center">
                 <span className="material-symbols-outlined text-[28px] text-gray-400">map</span>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-xs">Route Mapping Ready</span>
@@ -444,7 +480,6 @@ export default function CreateDonation() {
               </div>
             </div>
 
-            {/* Next buttons */}
             <div className="pt-md border-t border-gray-100 flex justify-between items-center">
               <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)} className="text-xs uppercase font-bold text-gray-400">
                 Back to Food
@@ -468,8 +503,6 @@ export default function CreateDonation() {
             </div>
 
             <div className="space-y-md">
-              
-              {/* Drag and Drop Container */}
               <div className="border-2 border-dashed border-gray-200 hover:border-primary-500 rounded-2xl p-xl flex flex-col items-center justify-center text-center cursor-pointer transition-colors relative">
                 <input 
                   type="file" 
@@ -486,7 +519,6 @@ export default function CreateDonation() {
                 </span>
               </div>
 
-              {/* Uploading progress indicator */}
               {isUploading && (
                 <div className="p-sm bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-between text-xs">
                   <div className="flex items-center gap-xs">
@@ -497,7 +529,6 @@ export default function CreateDonation() {
                 </div>
               )}
 
-              {/* Uploaded Files Preview Grid */}
               {uploadedFiles.length > 0 && (
                 <div className="space-y-sm">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
@@ -507,7 +538,6 @@ export default function CreateDonation() {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-sm">
                     {uploadedFiles.map((file, idx) => (
                       <div key={idx} className="border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm flex flex-col justify-between">
-                        {/* Image preview */}
                         {file.previewUrl ? (
                           <img src={file.previewUrl} alt={file.name} className="h-28 w-full object-cover border-b border-gray-100" />
                         ) : (
@@ -516,12 +546,10 @@ export default function CreateDonation() {
                           </div>
                         )}
                         
-                        {/* File detail info */}
                         <div className="p-xs text-[10px] space-y-2xs text-left">
                           <p className="font-bold text-gray-800 truncate">{file.name}</p>
                           <p className="text-gray-400">{file.size}</p>
                           
-                          {/* File local progress bar */}
                           {file.progress < 100 && (
                             <div className="w-full bg-gray-200 h-1 rounded-full mt-2xs overflow-hidden">
                               <div className="bg-primary-700 h-full" style={{ width: `${file.progress}%` }} />
@@ -533,10 +561,8 @@ export default function CreateDonation() {
                   </div>
                 </div>
               )}
-
             </div>
 
-            {/* Next buttons */}
             <div className="pt-md border-t border-gray-100 flex justify-between items-center">
               <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)} className="text-xs uppercase font-bold text-gray-400">
                 Back to Logistics
@@ -554,8 +580,6 @@ export default function CreateDonation() {
         {/* --- STEP 4: AI PRE-ANALYSIS LOADER (WOW moment) --- */}
         {currentStep === 4 && (
           <div className="bg-white border border-gray-200 rounded-2xl p-xl shadow-sm text-center space-y-xl min-h-[360px] flex flex-col justify-center items-center">
-            
-            {/* Spinning load state */}
             <div className="relative flex items-center justify-center">
               <div className="w-16 h-16 border-4 border-primary-100 border-t-primary-700 rounded-full animate-spin" />
               <span className="material-symbols-outlined text-primary-700 text-[28px] absolute">psychology</span>
@@ -568,7 +592,6 @@ export default function CreateDonation() {
               </p>
             </div>
 
-            {/* Step-by-Step Anticipation Bullet items */}
             <div className="w-full max-w-xs space-y-sm text-left font-semibold text-xs border border-gray-100 rounded-xl p-md bg-gray-50/50">
               {aiLoaderTexts.map((text, idx) => (
                 <div key={idx} className="flex items-center gap-xs">
@@ -597,9 +620,7 @@ export default function CreateDonation() {
 
         {/* --- STEP 5: AI ANALYSIS REPORT --- */}
         {currentStep === 5 && (
-          <div className="bg-white border border-gray-200 rounded-2xl p-lg shadow-sm space-y-md text-left">
-            
-            {/* Report Header */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-lg shadow-sm space-y-md text-left animate-slide-up">
             <div className="border-b border-gray-100 pb-sm flex justify-between items-center">
               <div>
                 <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100/50 px-sm py-[4px] rounded border border-emerald-200 uppercase">
@@ -610,9 +631,7 @@ export default function CreateDonation() {
               <span className="text-[10px] text-gray-400 font-mono">ID: FB-AUDIT-4029</span>
             </div>
 
-            {/* Report details */}
             <div className="space-y-md">
-              
               <div className="p-sm bg-primary-50/10 border border-primary-100 rounded-xl text-xs space-y-xs">
                 <span className="text-[10px] font-bold text-primary-700 uppercase tracking-widest">Calculated Logistics Priority</span>
                 <div className="flex justify-between items-center">
@@ -624,16 +643,15 @@ export default function CreateDonation() {
                 </p>
               </div>
 
-              {/* Grid: Parsed metadata fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-md text-xs">
                 <div className="space-y-sm">
                   <div>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Analyzed Classification</span>
-                    <p className="text-xs font-bold text-gray-900 mt-[2px]">{category} (Hot-Served Buffet Food)</p>
+                    <p className="text-xs font-bold text-gray-900 mt-[2px]">{category || 'Prepared Meals'} (Hot-Served Buffet Food)</p>
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gemma Quantity Estimate</span>
-                    <p className="text-xs font-bold text-gray-900 mt-[2px]">{quantity || '150 Portions'} (Approx. 25 kg weight)</p>
+                    <p className="text-xs font-bold text-gray-900 mt-[2px]">{quantity || '3 large trays'} (Approx. 25 kg weight)</p>
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Meals Count Equivalent</span>
@@ -656,21 +674,8 @@ export default function CreateDonation() {
                   </div>
                 </div>
               </div>
-
-              <div className="h-[1px] bg-gray-100 w-full" />
-
-              {/* Suggested NGO route rationale */}
-              <div className="space-y-2xs text-xs">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Matching Recipient Recommendation</span>
-                <p className="font-bold text-gray-900">Kolkata Food Bank (1.2 km away)</p>
-                <p className="text-gray-500 leading-relaxed mt-[2px]">
-                  Matches the volume limits, has open capacity for cooked dinner items, and can dispatch an active electric-bike courier within 10 minutes.
-                </p>
-              </div>
-
             </div>
 
-            {/* Next buttons */}
             <div className="pt-md border-t border-gray-100 flex justify-between items-center">
               <Button variant="ghost" size="sm" onClick={() => setCurrentStep(3)} className="text-xs uppercase font-bold text-gray-400">
                 Re-upload Media
@@ -679,15 +684,172 @@ export default function CreateDonation() {
                 onClick={() => setCurrentStep(6)} 
                 className="bg-primary-700 hover:bg-primary-800 text-white font-bold text-xs uppercase tracking-wider px-lg py-md rounded-lg shadow-sm"
               >
-                Proceed to Final Summary
+                Proceed to Match NGOs
               </Button>
             </div>
           </div>
         )}
 
-        {/* --- STEP 6: CONFIRMATION & REVIEW --- */}
+        {/* --- STEP 6: INTELLIGENT NGO MATCHING (Phase 4 Rebuild) --- */}
         {currentStep === 6 && (
-          <div className="bg-white border border-gray-200 rounded-2xl p-lg shadow-sm space-y-md text-left">
+          <div className="bg-white border border-gray-200 rounded-2xl p-lg shadow-sm space-y-md text-left animate-slide-up">
+            
+            {/* Donation Summary Header */}
+            <div className="bg-gray-50 border border-gray-100 rounded-xl p-md flex flex-wrap justify-between items-center gap-sm">
+              <div>
+                <span className="text-[9px] font-bold text-primary-700 uppercase tracking-widest bg-primary-50 px-sm py-[2px] rounded border border-primary-100">
+                  Surplus Batch Summary
+                </span>
+                <h3 className="text-sm font-bold text-gray-900 mt-2xs">
+                  {foodName || 'Leftover Wedding Buffet'} ({mealCount || 150} Vegetarian Meals)
+                </h3>
+              </div>
+              <div className="text-xs text-right space-y-3xs">
+                <p><strong>Prepared:</strong> {prepTime || '8:30 PM'}</p>
+                <p className="text-red-600 font-bold"><strong>Pickup Deadline:</strong> 11:30 PM</p>
+              </div>
+            </div>
+
+            {/* Results Overview */}
+            <div className="flex justify-between items-center border-b border-gray-100 pb-xs">
+              <div>
+                <h2 className="text-md font-extrabold text-gray-900">3 Recommended Organizations Found</h2>
+                <p className="text-xs text-gray-400 mt-[2px]">Gemma matched recipients based on safety window and capacity.</p>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Best Match Confidence</span>
+                <p className="text-lg font-black text-emerald-600">98%</p>
+              </div>
+            </div>
+
+            {/* NGO Cards (Revealed sequentially/clickable) */}
+            <div className="grid grid-cols-1 gap-sm">
+              {NGO_RECOMMENDATIONS.map((ngo) => (
+                <div 
+                  key={ngo.id}
+                  onClick={() => setSelectedNgoId(ngo.id)}
+                  className={cn("p-md border rounded-xl cursor-pointer transition-all duration-200 text-left relative",
+                    selectedNgoId === ngo.id ? "border-primary-500 bg-primary-50/10 shadow-sm" : "border-gray-100 hover:border-gray-200"
+                  )}
+                >
+                  {ngo.recommended && (
+                    <span className="absolute -top-2.5 right-4 text-[9px] font-bold uppercase tracking-widest bg-emerald-600 text-white px-sm py-[2px] rounded-full shadow-xs">
+                      Best Match choice
+                    </span>
+                  )}
+
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-xs">
+                        <h4 className="text-xs font-bold text-gray-900">{ngo.name}</h4>
+                        <span className="material-symbols-outlined text-[14px] text-primary-700">verified</span>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-medium mt-[2px]">{ngo.acceptedTypes}</p>
+                    </div>
+                    <span className={cn("text-xs font-extrabold px-sm py-2xs border rounded-lg",
+                      ngo.matchScore >= 90 ? "bg-emerald-50 text-emerald-800 border-emerald-100" :
+                      ngo.matchScore >= 80 ? "bg-blue-50 text-blue-800 border-blue-100" : "bg-gray-50 text-gray-800 border-gray-100"
+                    )}>
+                      {ngo.matchScore}% Match
+                    </span>
+                  </div>
+
+                  {/* Secondary Details grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-xs pt-xs mt-xs border-t border-gray-50 text-[10px]">
+                    <div>
+                      <span className="text-gray-400 uppercase font-bold">Distance</span>
+                      <p className="font-bold text-gray-800">{ngo.distance}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 uppercase font-bold">Travel Time</span>
+                      <p className="font-bold text-gray-800">{ngo.travelTime}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 uppercase font-bold">Current Capacity</span>
+                      <p className="font-bold text-gray-800">{ngo.capacity}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 uppercase font-bold">Collection ETA</span>
+                      <p className="font-bold text-emerald-700">{ngo.estCollection}</p>
+                    </div>
+                  </div>
+
+                  {/* Expandable AI reasoning */}
+                  {selectedNgoId === ngo.id && (
+                    <div className="mt-md pt-sm border-t border-primary-100/50 space-y-xs animate-slide-up text-xs bg-white/50 p-sm rounded-lg">
+                      <span className="text-[9px] font-bold text-primary-700 uppercase tracking-widest flex items-center gap-[4px]">
+                        <span className="material-symbols-outlined text-[12px]">psychology</span>
+                        AI Match Reasoning Checklists
+                      </span>
+                      <div className="space-y-2xs mt-2xs">
+                        {ngo.reasoning.map((reason, idx) => (
+                          <div key={idx} className="flex items-start gap-xs text-[11px] text-gray-600">
+                            <span className="material-symbols-outlined text-emerald-600 text-[14px] mt-[2px]">check_circle</span>
+                            <span>{reason}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Side-by-side comparison (Section 4) */}
+            <div className="bg-gray-50 rounded-xl p-md border border-gray-100 text-xs">
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-xs block">
+                Quick Comparison Ledger
+              </span>
+              <table className="w-full text-left text-[11px]">
+                <thead>
+                  <tr className="border-b border-gray-200 text-gray-400 font-bold">
+                    <th className="pb-xs">Organization</th>
+                    <th className="pb-xs">Distance</th>
+                    <th className="pb-xs">Capacity</th>
+                    <th className="pb-xs">Pickup Speed</th>
+                    <th className="pb-xs">Compatibility</th>
+                  </tr>
+                </thead>
+                <tbody className="text-gray-800 font-medium">
+                  {NGO_RECOMMENDATIONS.map((ngo) => (
+                    <tr key={ngo.id} className={cn("border-b border-gray-100 last:border-none", selectedNgoId === ngo.id ? "font-bold text-primary-800" : "")}>
+                      <td className="py-xs">{ngo.name}</td>
+                      <td className="py-xs">{ngo.distance}</td>
+                      <td className="py-xs">{ngo.capacity.split(' ')[0]}</td>
+                      <td className="py-xs">{ngo.pickupAvailability.split(' ')[0]}</td>
+                      <td className="py-xs text-emerald-700">{ngo.matchScore}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Highlight Recommendation Choice */}
+            <div className="p-sm bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-xl text-xs flex items-center gap-sm">
+              <span className="material-symbols-outlined text-emerald-700">stars</span>
+              <p>
+                <strong>Recommended Choice:</strong> Helping Hands Shelter offers the fastest and safest distribution route, keeping food well within safe thermal parameters.
+              </p>
+            </div>
+
+            {/* Step actions */}
+            <div className="pt-md border-t border-gray-100 flex justify-between items-center">
+              <Button variant="ghost" size="sm" onClick={() => setCurrentStep(5)} className="text-xs uppercase font-bold text-gray-400">
+                Back to Report
+              </Button>
+              <Button 
+                onClick={() => setCurrentStep(7)} 
+                className="bg-primary-700 hover:bg-primary-800 text-white font-bold text-xs uppercase tracking-wider px-lg py-md rounded-lg shadow-sm"
+              >
+                Confirm NGO Match ({selectedNgo.name})
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* --- STEP 7: CONFIRMATION & REVIEW --- */}
+        {currentStep === 7 && (
+          <div className="bg-white border border-gray-200 rounded-2xl p-lg shadow-sm space-y-md text-left animate-slide-up">
             <div>
               <h2 className="text-lg font-extrabold text-gray-900">Review Donation Details</h2>
               <p className="text-xs text-gray-400 mt-[2px]">Confirm logistics parameters before saving to ledger.</p>
@@ -696,11 +858,11 @@ export default function CreateDonation() {
             <div className="space-y-sm text-xs border border-gray-100 bg-gray-50/50 rounded-xl p-md">
               <div className="flex justify-between border-b border-gray-100 pb-2xs">
                 <span className="text-gray-400 uppercase font-bold text-[10px]">Surplus Items</span>
-                <span className="text-gray-900 font-bold">{foodName}</span>
+                <span className="text-gray-900 font-bold">{foodName || 'Leftover Wedding Buffet Trays'}</span>
               </div>
               <div className="flex justify-between border-b border-gray-100 pb-2xs">
                 <span className="text-gray-400 uppercase font-bold text-[10px]">Portion Size</span>
-                <span className="text-gray-900 font-bold">{quantity} ({mealCount} Meals)</span>
+                <span className="text-gray-900 font-bold">{quantity} ({mealCount || 150} Meals)</span>
               </div>
               <div className="flex justify-between border-b border-gray-100 pb-2xs">
                 <span className="text-gray-400 uppercase font-bold text-[10px]">Pickup Target Window</span>
@@ -716,7 +878,7 @@ export default function CreateDonation() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400 uppercase font-bold text-[10px]">Routing Destination</span>
-                <span className="text-primary-700 font-bold">Kolkata Food Bank (Recommended)</span>
+                <span className="text-primary-700 font-bold">{selectedNgo.name} ({selectedNgo.distance})</span>
               </div>
             </div>
 
@@ -725,13 +887,12 @@ export default function CreateDonation() {
               <span><strong>Environmental projection:</strong> Redirecting this food offsets 62.5 kg of landfill methane decay immediately.</span>
             </div>
 
-            {/* Next buttons */}
             <div className="pt-md border-t border-gray-100 flex justify-between items-center">
-              <Button variant="ghost" size="sm" onClick={() => setCurrentStep(5)} className="text-xs uppercase font-bold text-gray-400">
-                Back to Report
+              <Button variant="ghost" size="sm" onClick={() => setCurrentStep(6)} className="text-xs uppercase font-bold text-gray-400">
+                Back to NGOs
               </Button>
               <Button 
-                onClick={() => setCurrentStep(7)} 
+                onClick={() => setCurrentStep(8)} 
                 className="bg-primary-700 hover:bg-primary-800 text-white font-bold text-xs uppercase tracking-wider px-lg py-md rounded-lg shadow-sm"
               >
                 Log to FoodBridge Ledger
@@ -740,11 +901,10 @@ export default function CreateDonation() {
           </div>
         )}
 
-        {/* --- STEP 7: SUCCESS SCREEN --- */}
-        {currentStep === 7 && (
+        {/* --- STEP 8: SUCCESS SCREEN --- */}
+        {currentStep === 8 && (
           <div className="bg-white border border-gray-200 rounded-2xl p-xl shadow-sm text-center space-y-md min-h-[360px] flex flex-col justify-center items-center">
             
-            {/* Green verification success */}
             <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mb-sm border border-emerald-200 animate-scale-in">
               <span className="material-symbols-outlined text-[32px]">verified</span>
             </div>
@@ -760,38 +920,23 @@ export default function CreateDonation() {
                 Active Logistics dispatching
               </div>
               <p className="text-gray-600 leading-relaxed">
-                Kolkata Food Bank has accepted the match. E-Bike Courier Rahul S. has been dispatched to collect the surplus from <strong>Grand Palace Hotel Kitchens</strong>.
+                <strong>{selectedNgo.name}</strong> has accepted the match. E-Bike Courier Rahul Sharma has been dispatched to collect the surplus from your location.
               </p>
             </div>
 
-            <div className="pt-md flex gap-sm">
+            <div className="pt-md flex flex-col sm:flex-row gap-sm w-full justify-center">
               <Button 
-                onClick={() => navigate('/donor-dashboard')}
-                className="bg-primary-700 hover:bg-primary-800 text-white font-bold text-xs uppercase tracking-wider px-lg py-md rounded-lg shadow-sm"
+                onClick={() => navigate('/track-donation')}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider px-lg py-md rounded-lg shadow-sm flex items-center justify-center gap-xs"
               >
-                Return to Command Center
+                <span className="material-symbols-outlined text-[18px]">local_shipping</span>
+                Track Live Delivery Route
               </Button>
               <Button 
-                variant="outline"
-                onClick={() => {
-                  // Reset form and go to Step 1
-                  setFoodName('');
-                  setCategory('');
-                  setQuantity('');
-                  setMealCount('');
-                  setPrepTime('');
-                  setExpiryEstimate('');
-                  setAddress('');
-                  setPickupWindow('');
-                  setInstructions('');
-                  setContactPerson('');
-                  setAccessibility('');
-                  setUploadedFiles([]);
-                  setCurrentStep(1);
-                }}
-                className="border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs uppercase tracking-wider px-lg py-md rounded-lg shadow-sm"
+                onClick={() => navigate('/donor-dashboard')}
+                className="border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs uppercase tracking-wider px-lg py-md rounded-lg shadow-sm"
               >
-                Donate More Food
+                Return to Command Center
               </Button>
             </div>
           </div>

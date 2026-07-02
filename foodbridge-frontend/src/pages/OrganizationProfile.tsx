@@ -1,207 +1,384 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { cn } from '../lib/utils';
+import { Button, Badge } from '../components/design-system';
 
-const OrganizationProfile = () => {
+interface NGO {
+  id: string;
+  name: string;
+  category: 'Food Bank' | 'Homeless Shelter' | 'Community Kitchen' | 'Orphanage';
+  mission: string;
+  distance: string;
+  coverage: string;
+  capacity: 'High' | 'Medium' | 'Low';
+  mealsDistributed: number;
+  acceptedTypes: string[];
+  contactEmail: string;
+  contactPhone: string;
+  operatingHours: string;
+  locationDetails: string;
+  recentRuns: { food: string; time: string; donor: string }[];
+  verified: boolean;
+}
+
+const NGO_DIRECTORY_DATA: NGO[] = [
+  {
+    id: 'ngo-1',
+    name: 'Helping Hands Shelter',
+    category: 'Homeless Shelter',
+    mission: 'Providing warm sanctuary, rehabilitation programs, and nutritious hot dinners to local homeless residents.',
+    distance: '1.8 km',
+    coverage: 'Salt Lake City Area, Sector II & III',
+    capacity: 'High',
+    mealsDistributed: 85420,
+    acceptedTypes: ['Prepared Meals', 'Baked Goods', 'Produce'],
+    contactEmail: 'logistics@helpinghands.org',
+    contactPhone: '+1 (555) 019-2831',
+    operatingHours: '8:00 AM - 11:30 PM Daily',
+    locationDetails: '850 Hope Ave, Sector II, Salt Lake',
+    verified: true,
+    recentRuns: [
+      { food: 'Prepared Buffet Curry & Rice (150 servings)', time: 'Today, 11:24 PM', donor: 'Grand Palace Banquet' },
+      { food: 'Assorted Bakery Bread loaves (40 items)', time: 'Yesterday, 10:45 AM', donor: 'Daily Artisan Bakery' }
+    ]
+  },
+  {
+    id: 'ngo-2',
+    name: 'Kolkata Community Kitchen',
+    category: 'Community Kitchen',
+    mission: 'Preparing and serving fresh lunches and warm dinners daily to low-income laborers and street children.',
+    distance: '3.4 km',
+    coverage: 'Sealdah, Bowbazar & Central District',
+    capacity: 'Medium',
+    mealsDistributed: 142100,
+    acceptedTypes: ['Prepared Meals', 'Produce', 'Dairy & Eggs'],
+    contactEmail: 'kitchen@kolkatafeed.org',
+    contactPhone: '+1 (555) 019-9082',
+    operatingHours: '9:00 AM - 8:00 PM Mon-Sat',
+    locationDetails: '12 Logistics Bypass, Sealdah',
+    verified: true,
+    recentRuns: [
+      { food: 'Fresh Organic Tomatoes & Onions (80 lbs)', time: '2 days ago', donor: 'Valley Farms Co.' },
+      { food: 'Paneer wraps & Salads (65 portions)', time: '3 days ago', donor: 'Fintech Corp Cafeteria' }
+    ]
+  },
+  {
+    id: 'ngo-3',
+    name: 'Hope Orphanage & Care',
+    category: 'Orphanage',
+    mission: 'Providing schooling, medical support, and regular meal plans to 120+ children in state custody.',
+    distance: '5.1 km',
+    coverage: 'Bidhannagar & Outer Suburbs',
+    capacity: 'Low',
+    mealsDistributed: 32900,
+    acceptedTypes: ['Baked Goods', 'Dairy & Eggs', 'Produce'],
+    contactEmail: 'care@hopeorphanage.org',
+    contactPhone: '+1 (555) 012-7634',
+    operatingHours: '7:30 AM - 6:00 PM Daily',
+    locationDetails: '404 Childrens Avenue, Bidhannagar',
+    verified: true,
+    recentRuns: [
+      { food: 'Sourdough loaves & pastry pouches', time: '3 days ago', donor: 'The Bread Artisan' },
+      { food: 'Fresh milk & dairy cartons', time: 'Last week', donor: 'Metro Dairy Distributors' }
+    ]
+  },
+  {
+    id: 'ngo-4',
+    name: 'Metropolitan Food Bank',
+    category: 'Food Bank',
+    mission: 'Large-scale warehouse facility collecting raw produce, dry food, and canned items for community food networks.',
+    distance: '7.8 km',
+    coverage: 'Greater Metro Metropolitan Zone',
+    capacity: 'High',
+    mealsDistributed: 520000,
+    acceptedTypes: ['Produce', 'Dairy & Eggs', 'Baked Goods'],
+    contactEmail: 'intake@metrofoodbank.org',
+    contactPhone: '+1 (555) 014-9988',
+    operatingHours: '7:00 AM - 5:00 PM Weekdays',
+    locationDetails: '900 Warehouse Row, Terminal 4',
+    verified: true,
+    recentRuns: [
+      { food: 'Bulk dry lentil sacks (400 lbs)', time: '4 days ago', donor: 'Import Logistics Ltd' }
+    ]
+  }
+];
+
+export default function OrganizationProfile() {
+  const navigate = useNavigate();
+  
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedCapacity, setSelectedCapacity] = useState<string>('All');
+
+  // Selected NGO for Detail Drawer/Panel View
+  const [selectedNgoId, setSelectedNgoId] = useState('ngo-1');
+
+  // Filter logic
+  const filteredNgos = NGO_DIRECTORY_DATA.filter(ngo => {
+    const matchesSearch = ngo.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          ngo.mission.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || ngo.category === selectedCategory;
+    const matchesCapacity = selectedCapacity === 'All' || ngo.capacity === selectedCapacity;
+    return matchesSearch && matchesCategory && matchesCapacity;
+  });
+
+  const selectedNgo = NGO_DIRECTORY_DATA.find(ngo => ngo.id === selectedNgoId) || NGO_DIRECTORY_DATA[0];
+
   return (
-    <div className="bg-background text-on-background min-h-screen flex">
-      {/* Sidebar Shell */}
-      <aside className="fixed left-0 top-0 h-full hidden lg:flex flex-col py-lg px-md w-64 bg-inverse-surface dark:bg-surface-container-lowest z-40 shadow-sm border-r border-inverse-surface dark:border-surface-container-lowest">
-        <div className="flex items-center gap-sm px-md mb-2xl">
-          <span className="font-headline-md text-headline-md text-surface-bright">FoodBridge</span>
-        </div>
-        <nav className="flex-1 flex flex-col gap-sm">
-          <Link to="/donor-dashboard" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm rounded-lg hover:bg-surface-variant/10 transition-all duration-200">
-            <span className="material-symbols-outlined mr-md">home</span>
-            <span className="font-body-md text-body-md">Home</span>
-          </Link>
-          <Link to="/donor-dashboard" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm rounded-lg hover:bg-surface-variant/10 transition-all duration-200">
-            <span className="material-symbols-outlined mr-md">card_giftcard</span>
-            <span className="font-body-md text-body-md">Donations</span>
-          </Link>
-          <Link to="/profile" className="bg-primary-container text-on-primary-container rounded-lg font-bold flex items-center px-md py-sm">
-            <span className="material-symbols-outlined mr-md">corporate_fare</span>
-            <span className="font-body-md text-body-md">Organizations</span>
-          </Link>
-          <Link to="/track-donation" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm rounded-lg hover:bg-surface-variant/10 transition-all duration-200">
-            <span className="material-symbols-outlined mr-md">local_shipping</span>
-            <span className="font-body-md text-body-md">Tracking</span>
-          </Link>
-          <Link to="/settings" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm rounded-lg hover:bg-surface-variant/10 transition-all duration-200">
-            <span className="material-symbols-outlined mr-md">settings</span>
-            <span className="font-body-md text-body-md">Settings</span>
-          </Link>
-        </nav>
-        <div className="mt-auto flex flex-col gap-sm border-t border-surface-variant/20 pt-md">
-          <Link to="#" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm rounded-lg hover:bg-surface-variant/10 transition-all duration-200">
-            <span className="material-symbols-outlined mr-md">contact_support</span>
-            <span className="font-body-md text-body-md">Support</span>
-          </Link>
-          <Link to="/" className="text-surface-variant hover:text-surface-bright flex items-center px-md py-sm rounded-lg hover:bg-surface-variant/10 transition-all duration-200">
-            <span className="material-symbols-outlined mr-md">logout</span>
-            <span className="font-body-md text-body-md">Log out</span>
-          </Link>
-        </div>
-      </aside>
+    <div className="min-h-screen bg-gray-50/50 text-gray-600 font-sans antialiased text-left flex flex-col justify-between">
       
-      {/* Main Content Area */}
-      <main className="flex-1 lg:ml-64 relative min-h-screen pb-2xl">
-        {/* Header Cover */}
-        <div className="h-64 w-full relative bg-surface-container-low" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBkuO_PEsem826-ZpEnMtNS9yJ3Mtk8wYV6QB_xNdmBogA2jtBo0hyuwdgcBf_jR4Bddy5bYFLCSEXW5T38G0puQGuJ0oewfmZwv6P_WpChwulUIHvMVKAkK1cIASi7ZsDGdyVZEV67cr9DKZOI1wqeFr9K2JQjRWOzmKOhLhr3xFSMQxIe7jepinJ5kFyV2Sh8B6hpslh-i2VBdmy7dABhkyllBFyc9uUalrGlf6t57LLQoGSXSmOaVUlXCaLIHF0jmzVmCIxuCq0')" }}>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+      {/* HEADER */}
+      <nav className="sticky top-0 z-40 w-full border-b border-gray-100 bg-white shadow-sm">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-lg">
+          <Link to="/donor-dashboard" className="flex items-center gap-xs cursor-pointer select-none">
+            <svg className="h-6 w-6 text-primary-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M4 19C4 19 6 15 12 15C18 15 20 19 20 19" />
+              <path d="M12 15V3" />
+            </svg>
+            <span className="font-sans text-md font-bold tracking-tight text-gray-900">
+              FoodBridge <span className="text-primary-700">AI</span>
+            </span>
+          </Link>
+
+          {/* Top Menu Items */}
+          <div className="hidden md:flex items-center gap-md text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <Link to="/donor-dashboard" className="hover:text-primary-700 transition-colors">Dashboard</Link>
+            <Link to="/profile" className="text-primary-700 font-bold border-b-2 border-primary-700 pb-sm pt-sm">Verified Orgs</Link>
+            <Link to="/track-donation" className="hover:text-primary-700 transition-colors">Track Runs</Link>
+            <Link to="/settings" className="hover:text-primary-700 transition-colors">Impact &amp; Settings</Link>
+          </div>
+
+          <div className="flex items-center gap-xs">
+            <Button size="sm" onClick={() => navigate('/create-donation')} className="bg-primary-700 hover:bg-primary-800 text-white font-bold text-xs uppercase px-md py-sm rounded-lg shadow-sm">
+              Donate Food
+            </Button>
+          </div>
         </div>
+      </nav>
+
+      {/* DIRECTORY CONTENT */}
+      <div className="flex-1 max-w-7xl w-full mx-auto px-lg py-xl">
         
-        <div className="max-w-7xl mx-auto px-md md:px-xl relative -mt-24 z-10">
-          {/* Profile Info Card */}
-          <div className="bg-surface-container-lowest rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] border border-outline-variant/30 p-xl flex flex-col md:flex-row gap-xl items-start md:items-end mb-2xl">
-            <div className="w-32 h-32 rounded-lg border-4 border-surface-container-lowest bg-surface-container overflow-hidden shrink-0 shadow-sm relative">
-              <img className="w-full h-full object-cover" data-alt="A bright, high-contrast, minimalist logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqG9_V8CjBjMvjVYh-kBOoNlbWs29vWZt9yKypB3Jt23e6D_4pWUuh2GO7oLsmOwHcwXs9lpb4SiBE5pCNmTBkkbqjZ6BYI_3M3KOtMxosr-vU2tAC5_iQ4YS6jGoY4JKau85507xJBiEvKG2eBQ1wIhuU79qlD50Uz8506F0nDkPcPg4RfWRtn-3R8wX1YFICkmGeiX6Yn58dMvU76T0OmU0msdf6vn6SiEfZIxOJG-G76hfkV2nwiG6ieQ0qUZp1s2ea3lEtTqY" alt="Logo" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-sm mb-sm">
-                <h1 className="font-headline-lg text-headline-lg text-on-surface">City Harvest Foundation</h1>
-                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-              </div>
-              <p className="font-body-md text-body-md text-on-surface-variant mb-md max-w-2xl">
-                A leading non-profit organization dedicated to rescuing surplus food and delivering it to community food programs across the metropolitan area.
-              </p>
-              <div className="flex flex-wrap gap-sm">
-                <span className="inline-flex items-center gap-xs px-sm py-xs bg-surface-container rounded-md font-label-md text-label-md text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[16px]">location_on</span>
-                  Downtown District
+        <header className="mb-lg space-y-2xs">
+          <h1 className="text-2xl font-black text-gray-900 leading-none">Verified Organizations Directory</h1>
+          <p className="text-xs text-gray-400">
+            Explore trusted NGO partners, community kitchens, and shelters matching the FoodBridge AI logistics ledger.
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-xl items-start">
+          
+          {/* LEFT COLUMN: Search & Filter Cards */}
+          <div className="lg:col-span-8 space-y-md">
+            
+            {/* SEARCH & FILTERS BAR */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-md shadow-sm grid grid-cols-1 md:grid-cols-3 gap-sm items-center">
+              
+              {/* Search text field */}
+              <div className="relative">
+                <span className="material-symbols-outlined text-[16px] text-gray-400 absolute left-sm top-1/2 -translate-y-1/2">
+                  search
                 </span>
-                <span className="inline-flex items-center gap-xs px-sm py-xs bg-primary-container/20 rounded-md font-label-md text-label-md text-primary">
-                  <span className="material-symbols-outlined text-[16px]">volunteer_activism</span>
-                  Accepting Donations
-                </span>
+                <input 
+                  type="text"
+                  placeholder="Search name, mission..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-lg pr-sm py-xs border border-gray-200 rounded-lg text-xs outline-none focus:border-primary-500"
+                />
               </div>
-            </div>
-            <div className="flex gap-md md:w-auto w-full md:flex-row flex-col">
-              <button className="bg-primary text-on-primary px-lg py-sm rounded-lg font-title-md text-title-md hover:bg-surface-tint transition-colors shadow-sm flex items-center justify-center gap-sm">
-                <span className="material-symbols-outlined">add</span>
-                Coordinate Drop-off
-              </button>
-              <button className="bg-surface-container text-on-surface px-md py-sm rounded-lg font-title-md text-title-md border border-outline-variant hover:bg-surface-container-high transition-colors flex items-center justify-center">
-                <span className="material-symbols-outlined">more_horiz</span>
-              </button>
-            </div>
-          </div>
-          
-          {/* Stats Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-md mb-2xl">
-            <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-md shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] flex items-center gap-md">
-              <div className="w-12 h-12 rounded-full bg-primary-container/20 flex items-center justify-center text-primary">
-                <span className="material-symbols-outlined">inventory_2</span>
-              </div>
+
+              {/* Category Filter */}
               <div>
-                <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-xs">Donations Shared</p>
-                <p className="font-headline-md text-headline-md text-on-surface">1,245<span className="font-body-md text-body-md text-on-surface-variant ml-xs">lbs this month</span></p>
-              </div>
-            </div>
-            <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-md shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] flex items-center gap-md">
-              <div className="w-12 h-12 rounded-full bg-tertiary-container/20 flex items-center justify-center text-tertiary">
-                <span className="material-symbols-outlined">restaurant</span>
-              </div>
-              <div>
-                <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-xs">Meals Rescued</p>
-                <p className="font-headline-md text-headline-md text-on-surface">85,420<span className="font-body-md text-body-md text-on-surface-variant ml-xs">YTD</span></p>
-              </div>
-            </div>
-            <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-md shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] flex items-center gap-md">
-              <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant">
-                <span className="material-symbols-outlined">groups</span>
-              </div>
-              <div>
-                <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-xs">Active Partners</p>
-                <p className="font-headline-md text-headline-md text-on-surface">42<span className="font-body-md text-body-md text-on-surface-variant ml-xs">orgs</span></p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Tabs Navigation */}
-          <div className="border-b border-outline-variant/30 mb-xl flex gap-xl overflow-x-auto hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <button className="font-title-md text-title-md text-primary border-b-2 border-primary pb-sm whitespace-nowrap">Impact</button>
-            <button className="font-title-md text-title-md text-on-surface-variant hover:text-on-surface pb-sm whitespace-nowrap">About</button>
-            <button className="font-title-md text-title-md text-on-surface-variant hover:text-on-surface pb-sm whitespace-nowrap">Documents</button>
-            <button className="font-title-md text-title-md text-on-surface-variant hover:text-on-surface pb-sm whitespace-nowrap">Reviews</button>
-          </div>
-          
-          {/* Content Area (Impact Tab Default) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-xl">
-            {/* Main Chart Area */}
-            <div className="lg:col-span-2 bg-surface-container-lowest rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] border border-outline-variant/30 p-xl">
-              <div className="flex justify-between items-center mb-xl">
-                <div>
-                  <h2 className="font-title-md text-title-md text-on-surface">Monthly Recovery Volume</h2>
-                  <p className="font-body-md text-body-md text-on-surface-variant">Pounds of food rescued over the last 6 months</p>
-                </div>
-                <select className="bg-surface-container border-outline-variant/30 rounded-lg text-body-md font-body-md px-md py-xs focus:ring-primary">
-                  <option>Last 6 Months</option>
-                  <option>This Year</option>
+                <select 
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-md py-xs border border-gray-200 rounded-lg text-xs bg-white outline-none cursor-pointer"
+                >
+                  <option value="All">All Categories</option>
+                  <option value="Homeless Shelter">Homeless Shelter</option>
+                  <option value="Community Kitchen">Community Kitchen</option>
+                  <option value="Orphanage">Orphanage</option>
+                  <option value="Food Bank">Food Bank</option>
                 </select>
               </div>
-              {/* Placeholder for Chart */}
-              <div className="h-64 w-full bg-surface-container-low rounded-lg relative overflow-hidden flex items-end px-md gap-sm pt-xl">
-                {/* Mock Bar Chart */}
-                <div className="w-full bg-primary/20 rounded-t-sm h-[40%] hover:bg-primary/30 transition-colors relative group">
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-surface-bright px-sm py-xs rounded font-label-md text-label-md opacity-0 group-hover:opacity-100 transition-opacity">4,200 lbs</div>
-                </div>
-                <div className="w-full bg-primary/40 rounded-t-sm h-[60%] hover:bg-primary/50 transition-colors relative group">
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-surface-bright px-sm py-xs rounded font-label-md text-label-md opacity-0 group-hover:opacity-100 transition-opacity">6,100 lbs</div>
-                </div>
-                <div className="w-full bg-primary/30 rounded-t-sm h-[50%] hover:bg-primary/40 transition-colors relative group">
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-surface-bright px-sm py-xs rounded font-label-md text-label-md opacity-0 group-hover:opacity-100 transition-opacity">5,300 lbs</div>
-                </div>
-                <div className="w-full bg-primary/60 rounded-t-sm h-[80%] hover:bg-primary/70 transition-colors relative group">
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-surface-bright px-sm py-xs rounded font-label-md text-label-md opacity-0 group-hover:opacity-100 transition-opacity">8,500 lbs</div>
-                </div>
-                <div className="w-full bg-primary/50 rounded-t-sm h-[70%] hover:bg-primary/60 transition-colors relative group">
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-surface-bright px-sm py-xs rounded font-label-md text-label-md opacity-0 group-hover:opacity-100 transition-opacity">7,200 lbs</div>
-                </div>
-                <div className="w-full bg-primary rounded-t-sm h-[95%] hover:bg-primary-container transition-colors relative group">
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-surface-bright px-sm py-xs rounded font-label-md text-label-md opacity-0 group-hover:opacity-100 transition-opacity">10,100 lbs</div>
-                </div>
+
+              {/* Capacity Filter */}
+              <div>
+                <select 
+                  value={selectedCapacity}
+                  onChange={(e) => setSelectedCapacity(e.target.value)}
+                  className="w-full px-md py-xs border border-gray-200 rounded-lg text-xs bg-white outline-none cursor-pointer"
+                >
+                  <option value="All">All Storage Capacities</option>
+                  <option value="High">High Capacity</option>
+                  <option value="Medium">Medium Capacity</option>
+                  <option value="Low">Low Capacity</option>
+                </select>
               </div>
-              <div className="flex justify-between mt-sm px-md text-on-surface-variant font-label-md text-label-md">
-                <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
-              </div>
+
             </div>
-            
-            {/* Secondary Info Side (About Snippet) */}
-            <div className="flex flex-col gap-xl">
-              <div className="bg-surface-container-lowest rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] border border-outline-variant/30 p-xl">
-                <h3 className="font-title-md text-title-md text-on-surface mb-md">Location</h3>
-                <div className="h-32 bg-surface-container-low rounded-lg mb-md relative overflow-hidden" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAe1K8zASx3PrcZICwWqw8VXnnMLFTwZ7_Uj6c32i8JDmDTJ25XNoh27Lf1l_MAkNcnZUi0pmN_U9aMO7aUhhX_CJf7PbKNy9Cu6X7Pr8COJMCrtFGh58Uwy9rU8nzLsMmjKzmkyFIs7IfPz3DumAFmVeHIiEQlYKTxtmCnrVMPC6C6qZJbQFDWpNLxvj2RiVPwrUfldgg1XAD3xK5AapKZFYBE7ChWGFjsPA3yAZMwAxtAWKU-Vandjld_RekUzReLCCHHb8T7aOQ')" }}>
-                  {/* Map Placeholder Visuals */}
+
+            {/* NGO CARD LIST */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
+              {filteredNgos.length > 0 ? (
+                filteredNgos.map(ngo => (
+                  <div 
+                    key={ngo.id}
+                    onClick={() => setSelectedNgoId(ngo.id)}
+                    className={cn("p-md bg-white border rounded-2xl cursor-pointer hover:border-gray-300 transition-all duration-200 flex flex-col justify-between min-h-[170px]",
+                      selectedNgoId === ngo.id ? "border-primary-500 ring-1 ring-primary-500 shadow-sm" : "border-gray-200"
+                    )}
+                  >
+                    <div className="space-y-xs">
+                      {/* Name / Category */}
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center gap-xs">
+                            <h4 className="text-xs font-bold text-gray-900">{ngo.name}</h4>
+                            {ngo.verified && (
+                              <span className="material-symbols-outlined text-[14px] text-primary-700" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                verified
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[9px] font-bold text-primary-700 uppercase tracking-widest">
+                            {ngo.category}
+                          </span>
+                        </div>
+                        <Badge variant="outline" className={cn("text-[9px] font-bold",
+                          ngo.capacity === 'High' ? "bg-emerald-50 text-emerald-800 border-emerald-250" :
+                          ngo.capacity === 'Medium' ? "bg-blue-50 text-blue-800 border-blue-250" : "bg-gray-50 text-gray-700 border-gray-200"
+                        )}>
+                          {ngo.capacity} Cap
+                        </Badge>
+                      </div>
+
+                      {/* Mission */}
+                      <p className="text-[10px] text-gray-500 line-clamp-3 leading-relaxed">
+                        {ngo.mission}
+                      </p>
+                    </div>
+
+                    {/* Stats summary footer */}
+                    <div className="pt-sm border-t border-gray-100 mt-sm flex justify-between items-center text-[10px] text-gray-400">
+                      <span><strong>Dist:</strong> {ngo.distance}</span>
+                      <span><strong>Diverted:</strong> {ngo.mealsDistributed.toLocaleString()} meals</span>
+                    </div>
+
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 p-xl bg-white border border-gray-200 rounded-2xl text-center space-y-xs">
+                  <span className="material-symbols-outlined text-[32px] text-gray-300">search_off</span>
+                  <p className="text-xs font-bold text-gray-900">No organizations match your filters</p>
+                  <p className="text-[10px] text-gray-400">Try modifying search tags or clearance parameters.</p>
                 </div>
-                <p className="font-body-md text-body-md text-on-surface flex items-start gap-sm">
-                  <span className="material-symbols-outlined text-on-surface-variant text-[20px] mt-xs">location_on</span>
-                  123 Logistics Way, Suite 400<br/>Metropolis, NY 10001
+              )}
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN: NGO PROFILE DETAIL VIEW */}
+          <div className="lg:col-span-4 space-y-md">
+            
+            <div className="bg-white border border-gray-200 rounded-2xl p-lg shadow-sm space-y-md text-left">
+              
+              {/* Header Cover */}
+              <div className="h-28 w-full bg-primary-100 rounded-xl relative overflow-hidden flex items-end p-sm">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
+                <div className="z-20 text-white space-y-3xs">
+                  <div className="flex items-center gap-2xs">
+                    <h3 className="text-xs font-black">{selectedNgo.name}</h3>
+                    <span className="material-symbols-outlined text-[14px] text-white">verified</span>
+                  </div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-primary-200">
+                    {selectedNgo.category}
+                  </p>
+                </div>
+              </div>
+
+              {/* Mission Summary */}
+              <div className="space-y-3xs text-xs">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Our Mission</span>
+                <p className="text-gray-600 leading-relaxed text-[11px]">
+                  {selectedNgo.mission}
                 </p>
               </div>
-              
-              <div className="bg-surface-container-lowest rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] border border-outline-variant/30 p-xl">
-                <h3 className="font-title-md text-title-md text-on-surface mb-md">Operating Hours</h3>
-                <ul className="flex flex-col gap-sm font-body-md text-body-md">
-                  <li className="flex justify-between">
-                    <span className="text-on-surface-variant">Mon - Fri</span>
-                    <span className="text-on-surface font-medium">8:00 AM - 6:00 PM</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-on-surface-variant">Saturday</span>
-                    <span className="text-on-surface font-medium">9:00 AM - 2:00 PM</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-on-surface-variant">Sunday</span>
-                    <span className="text-on-surface-variant italic">Closed</span>
-                  </li>
-                </ul>
+
+              {/* Impact stats */}
+              <div className="grid grid-cols-2 gap-sm border-y border-gray-100 py-sm">
+                <div>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Meals Distributed</span>
+                  <p className="text-sm font-black text-primary-700">{selectedNgo.mealsDistributed.toLocaleString()}</p>
+                </div>
+                <div>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Active Courier Coverage</span>
+                  <p className="text-sm font-black text-gray-900">{selectedNgo.distance} radius</p>
+                </div>
               </div>
+
+              {/* Accepted Food Categories */}
+              <div className="space-y-2xs text-xs">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Accepted Food Classes</span>
+                <div className="flex flex-wrap gap-2xs pt-2xs">
+                  {selectedNgo.acceptedTypes.map((type, idx) => (
+                    <span key={idx} className="text-[9px] font-bold text-primary-800 bg-primary-50 px-sm py-[3px] rounded border border-primary-150">
+                      {type}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Logistics map placeholder */}
+              <div className="space-y-2xs text-xs">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Logistics Coverage Area</span>
+                <div className="h-24 bg-gray-100 border border-gray-150 rounded-xl relative overflow-hidden flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[20px] text-gray-400">map</span>
+                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest ml-2xs">Coverage boundaries mapped</span>
+                </div>
+              </div>
+
+              {/* Contact info details */}
+              <div className="space-y-xs text-xs border-t border-gray-100 pt-sm">
+                <div>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Contact Dispatch</span>
+                  <p className="text-[11px] font-bold text-gray-800">{selectedNgo.contactEmail}</p>
+                </div>
+                <div>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Operating Schedule</span>
+                  <p className="text-[11px] font-bold text-gray-800">{selectedNgo.operatingHours}</p>
+                </div>
+              </div>
+
+              {/* Recent Activity Ledger (Section 3) */}
+              <div className="space-y-sm border-t border-gray-100 pt-sm">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
+                  Recent Deliveries Logged
+                </span>
+                
+                <div className="space-y-xs text-xs">
+                  {selectedNgo.recentRuns.map((run, idx) => (
+                    <div key={idx} className="p-xs bg-gray-50 border border-gray-100 rounded-lg flex flex-col gap-3xs">
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="font-bold text-gray-900 truncate max-w-[120px]">{run.donor}</span>
+                        <span className="text-gray-400 font-medium">{run.time}</span>
+                      </div>
+                      <p className="text-[10px] text-gray-500 truncate">{run.food}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             </div>
+
           </div>
+
         </div>
-      </main>
+
+      </div>
+
     </div>
   );
-};
-
-export default OrganizationProfile;
+}
