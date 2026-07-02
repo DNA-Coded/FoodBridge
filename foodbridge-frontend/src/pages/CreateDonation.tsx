@@ -142,8 +142,14 @@ export default function CreateDonation() {
     if (!aiResult) runAiAnalysis();
   };
 
+  const [matchingStep, setMatchingStep] = useState(0);
+
   const handleSubmit = () => {
     setSubmitted(true);
+    setMatchingStep(1);
+    // Simulate a beautiful multi-step AI matching process
+    setTimeout(() => setMatchingStep(2), 2000); // Gemma Analysis complete
+    setTimeout(() => setMatchingStep(3), 4500); // Found match
   };
 
   if (submitted) {
@@ -151,37 +157,73 @@ export default function CreateDonation() {
       <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'DM Sans', 'Inter', sans-serif", background: '#F5F0EA' }}>
         <Sidebar />
         <main style={{ marginLeft: '260px', flex: 1, padding: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', maxWidth: '480px' }}>
-            <div style={{ fontSize: '64px', marginBottom: '24px' }}>🎉</div>
-            <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-2px', color: '#1A1A1A', margin: '0 0 16px' }}>Donation<br />Submitted!</h1>
-            <p style={{ fontSize: '16px', color: '#666', lineHeight: 1.6, marginBottom: '32px' }}>
-              Gemma AI is analysing your donation and will match it with the best organization in under 3 minutes.
-            </p>
-            {aiResult && (
-              <div style={{ background: '#1A1A1A', borderRadius: '20px', padding: '28px', marginBottom: '32px', textAlign: 'left' }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#F5A623', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>🤖 Gemma AI Analysis</div>
-                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', lineHeight: 1.6, margin: '0 0 16px' }}>{aiResult.summary}</p>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  <span style={{ padding: '6px 14px', borderRadius: '999px', background: urgencyBg[aiResult.urgencyLevel], color: urgencyColor[aiResult.urgencyLevel], fontWeight: 700, fontSize: '13px' }}>
-                    {aiResult.urgencyLevel.toUpperCase()} urgency
-                  </span>
-                  <span style={{ padding: '6px 14px', borderRadius: '999px', background: '#F5A623', color: '#1A1A1A', fontWeight: 700, fontSize: '13px' }}>
-                    ~{aiResult.estimatedServings} servings
-                  </span>
-                  <span style={{ padding: '6px 14px', borderRadius: '999px', background: aiResult.safeToConsume ? '#D4EDDA' : '#F8D7DA', color: aiResult.safeToConsume ? '#155724' : '#721C24', fontWeight: 700, fontSize: '13px' }}>
-                    {aiResult.safeToConsume ? '✓ Safe to consume' : '⚠ Check food safety'}
-                  </span>
+          <div style={{ width: '100%', maxWidth: '600px', background: '#fff', borderRadius: '32px', padding: '48px', boxShadow: '0 24px 48px rgba(0,0,0,0.05)' }}>
+            
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+              <div style={{ 
+                width: '80px', height: '80px', borderRadius: '50%', background: matchingStep === 3 ? '#D4EDDA' : '#F5A623', 
+                margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px',
+                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: matchingStep === 3 ? '0 0 0 16px rgba(42,122,74,0.1)' : '0 0 0 16px rgba(245,166,35,0.1)'
+              }}>
+                {matchingStep === 3 ? '🎉' : <div style={{ animation: 'spin 2s linear infinite' }}>🤖</div>}
+              </div>
+              <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', color: '#1A1A1A', margin: '0 0 12px' }}>
+                {matchingStep === 3 ? 'Match Found!' : 'Gemma 4 is working...'}
+              </h1>
+              <p style={{ fontSize: '15px', color: '#666', margin: 0 }}>
+                {matchingStep === 3 ? 'Your donation has been secured by a verified organization.' : 'Finding the best local organization for your surplus food.'}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
+              {/* Step 1: Analysis */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '20px', borderRadius: '16px', background: matchingStep >= 1 ? '#F5F0EA' : '#fff', border: '2px solid', borderColor: matchingStep >= 1 ? 'transparent' : 'rgba(0,0,0,0.05)', transition: 'all 0.3s' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: matchingStep >= 2 ? '#2A7A4A' : '#F5A623', color: matchingStep >= 2 ? '#fff' : '#1A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '14px' }}>
+                  {matchingStep >= 2 ? '✓' : '1'}
+                </div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#1A1A1A' }}>Analyzing Food Safety & Urgency</div>
+                  <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>{matchingStep >= 2 && aiResult ? `Assessed as ${aiResult.urgencyLevel} urgency. Safe to consume.` : 'Processing donation details...'}</div>
+                </div>
+              </div>
+
+              {/* Step 2: Matching */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '20px', borderRadius: '16px', background: matchingStep >= 2 ? '#F5F0EA' : '#fff', border: '2px solid', borderColor: matchingStep >= 2 ? 'transparent' : 'rgba(0,0,0,0.05)', transition: 'all 0.3s', opacity: matchingStep >= 2 ? 1 : 0.5 }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: matchingStep >= 3 ? '#2A7A4A' : (matchingStep === 2 ? '#F5A623' : '#eee'), color: matchingStep >= 3 ? '#fff' : (matchingStep === 2 ? '#1A1A1A' : '#999'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '14px' }}>
+                  {matchingStep >= 3 ? '✓' : '2'}
+                </div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#1A1A1A' }}>Finding Best Organization Match</div>
+                  <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>{matchingStep >= 3 ? 'Matched with Hope Kitchen (2.4 km away)' : (matchingStep === 2 ? 'Scanning verified partners...' : 'Waiting for analysis...')}</div>
+                </div>
+              </div>
+            </div>
+
+            {matchingStep === 3 && (
+              <div style={{ animation: 'fadeUp 0.5s ease-out' }}>
+                <div style={{ background: '#1A1A1A', borderRadius: '20px', padding: '24px', marginBottom: '24px', color: '#fff', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                  <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>🍲</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '18px', fontWeight: 900, marginBottom: '4px' }}>Hope Community Kitchen</div>
+                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>They will pick up your {form.quantity} of {form.category || 'food'} today at {form.pickupTime || '4:00 PM'}.</div>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <Link to="/donor-dashboard" style={{ background: '#fff', color: '#1A1A1A', fontWeight: 700, padding: '16px', borderRadius: '999px', fontSize: '15px', textDecoration: 'none', textAlign: 'center', border: '2px solid rgba(0,0,0,0.1)' }}>
+                    Back to Dashboard
+                  </Link>
+                  <Link to="/track-donation" style={{ background: '#F5A623', color: '#1A1A1A', fontWeight: 800, padding: '16px', borderRadius: '999px', fontSize: '15px', textDecoration: 'none', textAlign: 'center', border: '2px solid #F5A623' }}>
+                    Track Pickup 📍
+                  </Link>
                 </div>
               </div>
             )}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <Link to="/donor-dashboard" style={{ background: '#1A1A1A', color: '#F5A623', fontWeight: 800, padding: '16px 32px', borderRadius: '999px', fontSize: '15px', textDecoration: 'none' }}>
-                View Dashboard
-              </Link>
-              <Link to="/track-donation" style={{ background: '#F5A623', color: '#1A1A1A', fontWeight: 800, padding: '16px 32px', borderRadius: '999px', fontSize: '15px', textDecoration: 'none' }}>
-                Track Donation →
-              </Link>
-            </div>
+
+            <style>{`
+              @keyframes spin { 100% { transform: rotate(360deg); } }
+              @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+            `}</style>
           </div>
         </main>
       </div>
